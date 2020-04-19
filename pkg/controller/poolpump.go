@@ -3,12 +3,12 @@ package controller
 import "github.com/libesz/poolmanager/pkg/io"
 
 type PoolPumpController struct {
-	timer io.SensingActuator
+	timer io.InputOutput
 }
 
 const configKey = "desired runtime per day"
 
-func NewPoolPumpController(timer io.SensingActuator) PoolPumpController {
+func NewPoolPumpController(timer io.InputOutput) PoolPumpController {
 	return PoolPumpController{timer: timer}
 }
 

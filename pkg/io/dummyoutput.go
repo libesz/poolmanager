@@ -2,10 +2,10 @@ package io
 
 import "fmt"
 
-type DummyActuator struct {
+type DummyOutput struct {
 	Name string
 }
 
-func (a *DummyActuator) Switch(value bool) {
+func (a *DummyOutput) Switch(value bool) {
 	fmt.Printf("Dummy %s set to: %t\n", a.Name, value)
 }

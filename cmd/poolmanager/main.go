@@ -20,7 +20,7 @@ func hour14() time.Time {
 }
 
 func main() {
-	timer := io.DummyTimer{
+	timer := io.TimedGPIO{
 		Name: "pump",
 		Now:  hour9,
 	}
@@ -32,9 +32,9 @@ func main() {
 
 	poolTempControllerConfig := controller.Config{"desired temperature": 28, "start hour": 10, "end hour": 13}
 	tempSensor := io.DummyTempSensor{Temperature: 26}
-	heaterOutputs := []io.Actuator{
-		&io.DummyActuator{Name: "heater1"},
-		&io.DummyActuator{Name: "heater2"},
+	heaterOutputs := []io.Output{
+		&io.DummyOutput{Name: "heater1"},
+		&io.DummyOutput{Name: "heater2"},
 	}
 	poolTempController := controller.PoolTempController{
 		HeaterFactor:  0.5,

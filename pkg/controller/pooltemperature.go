@@ -9,8 +9,8 @@ import (
 
 type PoolTempController struct {
 	HeaterFactor  float64
-	TempSensor    io.Sensor
-	HeaterOutputs []io.Actuator
+	TempSensor    io.Input
+	HeaterOutputs []io.Output
 	Now           func() time.Time
 }
 

@@ -1,16 +1,16 @@
 package io
 
-type Sensor interface {
+type Input interface {
 	Type() string
 	Degree() string
 	Value() float64
 }
 
-type Actuator interface {
+type Output interface {
 	Switch(bool)
 }
 
-type SensingActuator interface {
-	Sensor
-	Actuator
+type InputOutput interface {
+	Input
+	Output
 }

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type DummyTimer struct {
+type TimedGPIO struct {
 	Name                string
 	runTimeTodayInHours float64
 	lastStart           time.Time
@@ -13,15 +13,15 @@ type DummyTimer struct {
 	Now                 func() time.Time
 }
 
-func (t *DummyTimer) Type() string {
+func (t *TimedGPIO) Type() string {
 	return "time"
 }
 
-func (t *DummyTimer) Degree() string {
+func (t *TimedGPIO) Degree() string {
 	return "H"
 }
 
-func (t *DummyTimer) Value() float64 {
+func (t *TimedGPIO) Value() float64 {
 	t.resetTotalIfDayChanged()
 	if t.lastValue {
 		fmt.Printf("Timer %s running, value: %f\n", t.Name, t.runTimeTodayInHours+t.Now().Sub(t.lastStart).Hours())
@@ -31,7 +31,7 @@ func (t *DummyTimer) Value() float64 {
 	return t.runTimeTodayInHours
 }
 
-func (t *DummyTimer) resetTotalIfDayChanged() {
+func (t *TimedGPIO) resetTotalIfDayChanged() {
 	if !t.lastStart.Round(24 * time.Hour).Equal(t.Now().Round(24 * time.Hour)) {
 		fmt.Printf("Timer %s, no date cycle\n", t.Name)
 		t.runTimeTodayInHours = 0
@@ -40,7 +40,7 @@ func (t *DummyTimer) resetTotalIfDayChanged() {
 	}
 }
 
-func (t *DummyTimer) Switch(value bool) {
+func (t *TimedGPIO) Switch(value bool) {
 	t.resetTotalIfDayChanged()
 	now := t.Now()
 	if !t.lastValue && value {
