@@ -8,10 +8,10 @@ import (
 )
 
 type PoolTempController struct {
-	HeaterFactor  float64
-	TempSensor    io.Input
-	HeaterOutputs []io.Output
-	Now           func() time.Time
+	HeaterFactor float64
+	TempSensor   io.Input
+	HeaterOutput io.Output
+	Now          func() time.Time
 }
 
 const (
@@ -28,12 +28,6 @@ func (c PoolTempController) GetConfigKeys() []string {
 	}
 }
 
-func (c PoolTempController) SetHeater(value bool) {
-	for _, item := range c.HeaterOutputs {
-		item.Switch(value)
-	}
-}
-
 func (c PoolTempController) Act(config Config) {
 	desiredTemp := config[configKeyTemp]
 	currentTemp := c.TempSensor.Value()
@@ -45,11 +39,11 @@ func (c PoolTempController) Act(config Config) {
 		if now.Before(nextStop) {
 			if desiredTemp >= currentTemp {
 				fmt.Printf("We are actually in the active period, and need more heat\n")
-				c.SetHeater(true)
+				c.HeaterOutput.Switch(true)
 				return
 			}
 			fmt.Printf("We are actually in the active period, the temperature is already fine\n")
-			c.SetHeater(false)
+			c.HeaterOutput.Switch(false)
 			return
 		}
 		nextStart = nextStart.Add(24 * time.Hour)
@@ -59,10 +53,10 @@ func (c PoolTempController) Act(config Config) {
 	fmt.Printf("We are not in the active period. Hours until the next one: %f. Calculated desired temperature: %f\n", thisManyHoursUntilNextStart, calculatedDesiredTemp)
 	if calculatedDesiredTemp >= currentTemp {
 		fmt.Printf("Need nore heat\n")
-		c.SetHeater(true)
+		c.HeaterOutput.Switch(true)
 		return
 	}
 	fmt.Printf("The temperature is already fine\n")
-	c.SetHeater(false)
+	c.HeaterOutput.Switch(false)
 	return
 }

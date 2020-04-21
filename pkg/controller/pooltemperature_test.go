@@ -3,8 +3,6 @@ package controller
 import (
 	"testing"
 	"time"
-
-	"github.com/libesz/poolmanager/pkg/io"
 )
 
 type MockHeater struct {
@@ -35,9 +33,9 @@ func TestTemp(t *testing.T) {
 	heater := &MockHeater{}
 	tempSensor := &MockTempSensor{}
 	c := PoolTempController{
-		HeaterFactor:  0.5,
-		HeaterOutputs: []io.Output{heater},
-		TempSensor:    tempSensor,
+		HeaterFactor: 0.5,
+		HeaterOutput: heater,
+		TempSensor:   tempSensor,
 	}
 	config := Config{"desired temperature": 28, "start hour": 10, "end hour": 13}
 
