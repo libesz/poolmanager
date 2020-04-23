@@ -32,15 +32,12 @@ func main() {
 
 	poolTempControllerConfig := controller.Config{"desired temperature": 28, "start hour": 10, "end hour": 13}
 	tempSensor := io.DummyTempSensor{Temperature: 26}
-	heaterOutputs := []io.Output{
-		&io.DummyOutput{Name: "heater1"},
-		&io.DummyOutput{Name: "heater2"},
-	}
+	heaterOutput := &io.DummyOutput{Name: "heater1"}
 	poolTempController := controller.PoolTempController{
-		HeaterFactor:  0.5,
-		HeaterOutputs: heaterOutputs,
-		TempSensor:    &tempSensor,
-		Now:           time.Now,
+		HeaterFactor: 0.5,
+		HeaterOutput: heaterOutput,
+		TempSensor:   &tempSensor,
+		Now:          hour9,
 	}
 	poolTempController.Act(poolTempControllerConfig)
 }

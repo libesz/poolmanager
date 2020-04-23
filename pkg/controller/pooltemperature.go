@@ -48,8 +48,8 @@ func (c PoolTempController) Act(config Config) {
 		}
 		nextStart = nextStart.Add(24 * time.Hour)
 	}
-	thisManyHoursUntilNextStart := now.Sub(nextStart).Hours()
-	calculatedDesiredTemp := desiredTemp + thisManyHoursUntilNextStart/c.HeaterFactor
+	thisManyHoursUntilNextStart := nextStart.Sub(now).Hours()
+	calculatedDesiredTemp := desiredTemp - thisManyHoursUntilNextStart*c.HeaterFactor
 	fmt.Printf("We are not in the active period. Hours until the next one: %f. Calculated desired temperature: %f\n", thisManyHoursUntilNextStart, calculatedDesiredTemp)
 	if calculatedDesiredTemp >= currentTemp {
 		fmt.Printf("Need nore heat\n")
