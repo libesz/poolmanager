@@ -11,6 +11,15 @@ type MockHeater struct {
 
 func (t *MockHeater) Switch(value bool) bool {
 	t.calledWith = value
+	return true
+}
+
+type MockPump struct {
+	calledWith bool
+}
+
+func (t *MockPump) Switch(value bool) bool {
+	t.calledWith = value
 	return false
 }
 
@@ -32,10 +41,12 @@ func (s *MockTempSensor) Value() float64 {
 
 func TestTemp(t *testing.T) {
 	heater := &MockHeater{}
+	pumpOutput := &MockPump{}
 	tempSensor := &MockTempSensor{}
 	c := PoolTempController{
 		heaterFactor: 0.5,
 		heaterOutput: heater,
+		pumpOutput:   pumpOutput,
 		tempSensor:   tempSensor,
 	}
 	config := Config{"desired temperature": 28, "start hour": 10, "end hour": 13}

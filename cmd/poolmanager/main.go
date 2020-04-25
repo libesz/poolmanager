@@ -12,8 +12,7 @@ import (
 func main() {
 	config := controller.Config{"desired runtime per day": 1, "desired temperature": 28, "start hour": 22, "end hour": 23}
 	pumpOutput := io.DummyOutput{Name: "pumpOutput"}
-	pumpOrOutput := io.NewOrOutput(&pumpOutput, 2)
-	pumpOrOutputMembers := pumpOrOutput.GetMembers()
+	pumpOrOutputMembers := io.NewOrOutput(&pumpOutput, 2)
 
 	timer := io.NewTimerOutput("pumpTimerOutput", &pumpOrOutputMembers[0], time.Now)
 	poolPumpController := controller.NewPoolPumpController(&timer)

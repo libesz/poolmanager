@@ -39,15 +39,11 @@ func (o *OrOutput) setMemberState(i int, value bool) bool {
 	return o.realOutput.Switch(false)
 }
 
-func (o *OrOutput) GetMembers() []OrOutputMember {
-	return o.members
-}
-
-func NewOrOutput(realOutput Output, amount int) OrOutput {
+func NewOrOutput(realOutput Output, amount int) []OrOutputMember {
 	result := OrOutput{realOutput: realOutput}
 	result.memberStates = make(map[int]bool)
 	for i := 0; i < amount; i++ {
 		result.members = append(result.members, OrOutputMember{id: i, master: result})
 	}
-	return result
+	return result.members
 }
