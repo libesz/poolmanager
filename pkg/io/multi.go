@@ -22,7 +22,6 @@ type OrOutputMember struct {
 type OrOutput struct {
 	realOutput   Output
 	memberStates map[int]bool
-	members      []OrOutputMember
 }
 
 func (o *OrOutputMember) Switch(value bool) bool {
@@ -42,8 +41,9 @@ func (o *OrOutput) setMemberState(i int, value bool) bool {
 func NewOrOutput(realOutput Output, amount int) []OrOutputMember {
 	result := OrOutput{realOutput: realOutput}
 	result.memberStates = make(map[int]bool)
+	members := []OrOutputMember{}
 	for i := 0; i < amount; i++ {
-		result.members = append(result.members, OrOutputMember{id: i, master: result})
+		members = append(members, OrOutputMember{id: i, master: result})
 	}
-	return result.members
+	return members
 }
