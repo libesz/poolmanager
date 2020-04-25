@@ -49,7 +49,7 @@ func (t *TimerOutput) resetTotalIfDayChanged() {
 	}
 }
 
-func (t *TimerOutput) Switch(value bool) {
+func (t *TimerOutput) Switch(value bool) bool {
 	t.resetTotalIfDayChanged()
 	now := t.now()
 	if !t.lastValue && value {
@@ -61,5 +61,5 @@ func (t *TimerOutput) Switch(value bool) {
 		log.Printf("Dummy timer %s stopped. total run today: %f\n", t.name, t.runTimeTodayInHours)
 	}
 	t.lastValue = value
-	t.output.Switch(value)
+	return t.output.Switch(value)
 }

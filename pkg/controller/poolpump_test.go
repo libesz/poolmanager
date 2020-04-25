@@ -21,8 +21,9 @@ func (t *MockTimer) Value() float64 {
 	return t.nextValue
 }
 
-func (t *MockTimer) Switch(value bool) {
+func (t *MockTimer) Switch(value bool) bool {
 	t.calledWith = value
+	return false
 }
 
 func TestNormal(t *testing.T) {

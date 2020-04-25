@@ -9,8 +9,9 @@ type MockHeater struct {
 	calledWith bool
 }
 
-func (t *MockHeater) Switch(value bool) {
+func (t *MockHeater) Switch(value bool) bool {
 	t.calledWith = value
+	return false
 }
 
 type MockTempSensor struct {

@@ -11,20 +11,32 @@ func NewPoolTempController(
 	heaterFactor float64,
 	tempSensor io.Input,
 	heaterOutput io.Output,
+	pumpOutput io.Output,
 	now func() time.Time) PoolTempController {
 	return PoolTempController{
 		heaterFactor: heaterFactor,
 		tempSensor:   tempSensor,
 		heaterOutput: heaterOutput,
+		pumpOutput:   pumpOutput,
 		now:          now,
 	}
 }
 
+type PendingHeaterOperation int
+
+const (
+	None PendingHeaterOperation = 0
+	On   PendingHeaterOperation = 1
+	Off  PendingHeaterOperation = 2
+)
+
 type PoolTempController struct {
-	heaterFactor float64
-	tempSensor   io.Input
-	heaterOutput io.Output
-	now          func() time.Time
+	heaterFactor           float64
+	tempSensor             io.Input
+	heaterOutput           io.Output
+	pumpOutput             io.Output
+	pendingHeaterOperation PendingHeaterOperation
+	now                    func() time.Time
 }
 
 const (
@@ -42,6 +54,15 @@ func (c PoolTempController) GetConfigKeys() []string {
 }
 
 func (c PoolTempController) Act(config Config) time.Duration {
+	if c.pendingHeaterOperation != None {
+		if c.pendingHeaterOperation == On {
+			c.heaterOutput.Switch(true)
+		} else if c.pendingHeaterOperation == Off {
+			c.heaterOutput.Switch(false)
+		}
+		c.pendingHeaterOperation = None
+		return 5 * time.Second
+	}
 	desiredTemp := config[configKeyTemp]
 	currentTemp := c.tempSensor.Value()
 	now := c.now()
@@ -52,10 +73,18 @@ func (c PoolTempController) Act(config Config) time.Duration {
 		if now.Before(nextStop) {
 			if desiredTemp >= currentTemp {
 				log.Printf("In the active period, the temparature is %f, need more heat to reach %f\n", currentTemp, desiredTemp)
+				if c.pumpOutput.Switch(true) {
+					c.pendingHeaterOperation = On
+					return 5 * time.Second
+				}
 				c.heaterOutput.Switch(true)
 				return 5 * time.Second
 			}
 			log.Printf("In the active period, the temperature is %f, already fine\n", currentTemp)
+			if c.pumpOutput.Switch(false) {
+				c.pendingHeaterOperation = Off
+				return 5 * time.Second
+			}
 			c.heaterOutput.Switch(false)
 			return 5 * time.Second
 		}
@@ -65,10 +94,18 @@ func (c PoolTempController) Act(config Config) time.Duration {
 	calculatedDesiredTemp := desiredTemp - thisManyHoursUntilNextStart*c.heaterFactor
 	if calculatedDesiredTemp >= currentTemp {
 		log.Printf("Not in the active period. Hours until the next one: %f. Calculated desired temperature: %f, need more heat\n", thisManyHoursUntilNextStart, calculatedDesiredTemp)
+		if c.pumpOutput.Switch(true) {
+			c.pendingHeaterOperation = On
+			return 5 * time.Second
+		}
 		c.heaterOutput.Switch(true)
 		return 5 * time.Second
 	}
 	log.Printf("The temperature is already fine\n")
+	if c.pumpOutput.Switch(false) {
+		c.pendingHeaterOperation = Off
+		return 5 * time.Second
+	}
 	c.heaterOutput.Switch(false)
 	return 5 * time.Second
 }

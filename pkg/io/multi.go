@@ -25,19 +25,18 @@ type OrOutput struct {
 	members      []OrOutputMember
 }
 
-func (o *OrOutputMember) Switch(value bool) {
-	o.master.setMemberState(o.id, value)
+func (o *OrOutputMember) Switch(value bool) bool {
+	return o.master.setMemberState(o.id, value)
 }
 
-func (o *OrOutput) setMemberState(i int, value bool) {
+func (o *OrOutput) setMemberState(i int, value bool) bool {
 	o.memberStates[i] = value
 	for _, memberState := range o.memberStates {
 		if memberState {
-			o.realOutput.Switch(true)
-			return
+			return o.realOutput.Switch(true)
 		}
 	}
-	o.realOutput.Switch(false)
+	return o.realOutput.Switch(false)
 }
 
 func (o *OrOutput) GetMembers() []OrOutputMember {
