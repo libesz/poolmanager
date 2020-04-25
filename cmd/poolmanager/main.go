@@ -1,38 +1,33 @@
 package main
 
 import (
+	"sync"
 	"time"
 
 	"github.com/libesz/poolmanager/pkg/controller"
 	"github.com/libesz/poolmanager/pkg/io"
+	"github.com/libesz/poolmanager/pkg/scheduler"
 )
 
-func hour9() time.Time {
-	return time.Date(2020, 04, 15, 9, 0, 0, 0, time.Local)
-}
-
-func hour12() time.Time {
-	return time.Date(2020, 04, 15, 12, 0, 0, 0, time.Local)
-}
-
-func hour14() time.Time {
-	return time.Date(2020, 04, 15, 14, 0, 0, 0, time.Local)
-}
-
 func main() {
-	timer := io.TimedGPIO{
-		Name: "pump",
-		Now:  hour9,
-	}
-	poolPumpControllerConfig := controller.Config{"desired runtime per day": 1}
+	config := controller.Config{"desired runtime per day": 1, "desired temperature": 28, "start hour": 22, "end hour": 23}
+	pumpOutput := io.DummyOutput{Name: "pumpOutput"}
+	timer := io.NewTimerOutput("pumpTimerOutput", &pumpOutput, time.Now)
 	poolPumpController := controller.NewPoolPumpController(&timer)
-	poolPumpController.Act(poolPumpControllerConfig)
-	timer.Now = hour12
-	poolPumpController.Act(poolPumpControllerConfig)
 
-	poolTempControllerConfig := controller.Config{"desired temperature": 28, "start hour": 10, "end hour": 13}
 	tempSensor := io.DummyTempSensor{Temperature: 26}
 	heaterOutput := &io.DummyOutput{Name: "heater1"}
-	poolTempController := controller.NewPoolTempController(0.5, &tempSensor, heaterOutput, hour9)
-	poolTempController.Act(poolTempControllerConfig)
+	poolTempController := controller.NewPoolTempController(0.5, &tempSensor, heaterOutput, time.Now)
+
+	s := scheduler.New()
+	stopChan := make(chan struct{})
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		s.Run(&config, stopChan)
+		wg.Done()
+	}()
+	s.AddController(&poolPumpController)
+	s.AddController(&poolTempController)
+	wg.Wait()
 }

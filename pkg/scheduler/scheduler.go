@@ -1,31 +1,37 @@
 package scheduler
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/libesz/poolmanager/pkg/controller"
 )
 
-type Instance struct {
-	controllers []controller.Controller
+func New() Scheduler {
+	return Scheduler{taskChan: make(chan controller.Controller)}
 }
 
-func New() Instance {
-	return Instance{}
+func (s *Scheduler) AddController(c controller.Controller) {
+	fmt.Printf("Scheduler: added controller: %s\n", c.GetName())
+	s.enqueue(c)
 }
 
-func (i *Instance) AddController(c controller.Controller) {
-	i.controllers = append(i.controllers, c)
+func (s *Scheduler) enqueue(c controller.Controller) {
+	s.taskChan <- c
 }
 
-func (i *Instance) Run(pollTime time.Duration, stopChan chan struct{}) {
-	ticker := time.NewTicker(pollTime).C
+func (s *Scheduler) Run(config *controller.Config, stopChan chan struct{}) {
 	for {
 		select {
-		case <-ticker:
-			for _, c := range i.controllers {
-				c.Act()
-			}
+		case c := <-s.taskChan:
+			fmt.Printf("Scheduler: executing controller: %s\n", c.GetName())
+			reEnqueAfter := c.Act(*config)
+			go func(after time.Duration) {
+				time.Sleep(after)
+				s.enqueue(c)
+			}(reEnqueAfter)
+		case <-stopChan:
+			return
 		}
 	}
 }

@@ -1,6 +1,10 @@
 package controller
 
-import "github.com/libesz/poolmanager/pkg/io"
+import (
+	"time"
+
+	"github.com/libesz/poolmanager/pkg/io"
+)
 
 type PoolPumpController struct {
 	timer io.InputOutput
@@ -16,6 +20,11 @@ func (c *PoolPumpController) GetConfigKeys() []string {
 	return []string{configKey}
 }
 
-func (c *PoolPumpController) Act(config Config) {
+func (c *PoolPumpController) Act(config Config) time.Duration {
 	c.timer.Switch(config[configKey] > c.timer.Value())
+	return 5 * time.Second
+}
+
+func (c *PoolPumpController) GetName() string {
+	return "PoolPumpController"
 }
