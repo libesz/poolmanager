@@ -33,10 +33,10 @@ func (t *TimedGPIO) Value() float64 {
 
 func (t *TimedGPIO) resetTotalIfDayChanged() {
 	if !t.lastStart.Round(24 * time.Hour).Equal(t.Now().Round(24 * time.Hour)) {
-		fmt.Printf("Timer %s, no date cycle\n", t.Name)
 		t.runTimeTodayInHours = 0
-	} else {
 		fmt.Printf("Timer %s, date cycle\n", t.Name)
+	} else {
+		fmt.Printf("Timer %s, no date cycle\n", t.Name)
 	}
 }
 

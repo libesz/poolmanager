@@ -7,11 +7,24 @@ import (
 	"github.com/libesz/poolmanager/pkg/io"
 )
 
+func NewPoolTempController(
+	heaterFactor float64,
+	tempSensor io.Input,
+	heaterOutput io.Output,
+	now func() time.Time) PoolTempController {
+	return PoolTempController{
+		heaterFactor: heaterFactor,
+		tempSensor:   tempSensor,
+		heaterOutput: heaterOutput,
+		now:          now,
+	}
+}
+
 type PoolTempController struct {
-	HeaterFactor float64
-	TempSensor   io.Input
-	HeaterOutput io.Output
-	Now          func() time.Time
+	heaterFactor float64
+	tempSensor   io.Input
+	heaterOutput io.Output
+	now          func() time.Time
 }
 
 const (
@@ -30,8 +43,8 @@ func (c PoolTempController) GetConfigKeys() []string {
 
 func (c PoolTempController) Act(config Config) {
 	desiredTemp := config[configKeyTemp]
-	currentTemp := c.TempSensor.Value()
-	now := c.Now()
+	currentTemp := c.tempSensor.Value()
+	now := c.now()
 	nextStart := time.Date(now.Year(), now.Month(), now.Day(), int(config[configKeyStart]), 0, 0, 0, now.Local().Location())
 	nextStop := time.Date(now.Year(), now.Month(), now.Day(), int(config[configKeyEnd]), 0, 0, 0, now.Local().Location())
 
@@ -39,24 +52,24 @@ func (c PoolTempController) Act(config Config) {
 		if now.Before(nextStop) {
 			if desiredTemp >= currentTemp {
 				fmt.Printf("We are actually in the active period, and need more heat\n")
-				c.HeaterOutput.Switch(true)
+				c.heaterOutput.Switch(true)
 				return
 			}
 			fmt.Printf("We are actually in the active period, the temperature is already fine\n")
-			c.HeaterOutput.Switch(false)
+			c.heaterOutput.Switch(false)
 			return
 		}
 		nextStart = nextStart.Add(24 * time.Hour)
 	}
 	thisManyHoursUntilNextStart := nextStart.Sub(now).Hours()
-	calculatedDesiredTemp := desiredTemp - thisManyHoursUntilNextStart*c.HeaterFactor
+	calculatedDesiredTemp := desiredTemp - thisManyHoursUntilNextStart*c.heaterFactor
 	fmt.Printf("We are not in the active period. Hours until the next one: %f. Calculated desired temperature: %f\n", thisManyHoursUntilNextStart, calculatedDesiredTemp)
 	if calculatedDesiredTemp >= currentTemp {
 		fmt.Printf("Need nore heat\n")
-		c.HeaterOutput.Switch(true)
+		c.heaterOutput.Switch(true)
 		return
 	}
 	fmt.Printf("The temperature is already fine\n")
-	c.HeaterOutput.Switch(false)
+	c.heaterOutput.Switch(false)
 	return
 }
