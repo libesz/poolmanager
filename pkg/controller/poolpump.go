@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"time"
 
 	"github.com/libesz/poolmanager/pkg/io"
@@ -21,7 +22,10 @@ func (c *PoolPumpController) GetConfigKeys() []string {
 }
 
 func (c *PoolPumpController) Act(config Config) time.Duration {
-	c.timer.Switch(config[configKey] > c.timer.Value())
+	task := config[configKey] > c.timer.Value()
+	if c.timer.Switch(task) {
+		log.Printf("PoolPumpController: changed pump state to: %t", task)
+	}
 	return 5 * time.Second
 }
 
