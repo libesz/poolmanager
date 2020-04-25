@@ -1,6 +1,6 @@
 package io
 
-import "fmt"
+import "log"
 
 type DummyOutput struct {
 	Name  string
@@ -9,5 +9,5 @@ type DummyOutput struct {
 
 func (a *DummyOutput) Switch(value bool) {
 	a.Value = value
-	fmt.Printf("Dummy %s set to: %t\n", a.Name, value)
+	log.Printf("Dummy %s set to: %t\n", a.Name, value)
 }

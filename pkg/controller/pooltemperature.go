@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/libesz/poolmanager/pkg/io"
@@ -51,11 +51,11 @@ func (c PoolTempController) Act(config Config) time.Duration {
 	if now.After(nextStart) {
 		if now.Before(nextStop) {
 			if desiredTemp >= currentTemp {
-				fmt.Printf("In the active period, the temparature is %f, need more heat to reach %f\n", currentTemp, desiredTemp)
+				log.Printf("In the active period, the temparature is %f, need more heat to reach %f\n", currentTemp, desiredTemp)
 				c.heaterOutput.Switch(true)
 				return 5 * time.Second
 			}
-			fmt.Printf("In the active period, the temperature is %f, already fine\n", currentTemp)
+			log.Printf("In the active period, the temperature is %f, already fine\n", currentTemp)
 			c.heaterOutput.Switch(false)
 			return 5 * time.Second
 		}
@@ -64,11 +64,11 @@ func (c PoolTempController) Act(config Config) time.Duration {
 	thisManyHoursUntilNextStart := nextStart.Sub(now).Hours()
 	calculatedDesiredTemp := desiredTemp - thisManyHoursUntilNextStart*c.heaterFactor
 	if calculatedDesiredTemp >= currentTemp {
-		fmt.Printf("Not in the active period. Hours until the next one: %f. Calculated desired temperature: %f, need more heat\n", thisManyHoursUntilNextStart, calculatedDesiredTemp)
+		log.Printf("Not in the active period. Hours until the next one: %f. Calculated desired temperature: %f, need more heat\n", thisManyHoursUntilNextStart, calculatedDesiredTemp)
 		c.heaterOutput.Switch(true)
 		return 5 * time.Second
 	}
-	fmt.Printf("The temperature is already fine\n")
+	log.Printf("The temperature is already fine\n")
 	c.heaterOutput.Switch(false)
 	return 5 * time.Second
 }

@@ -1,7 +1,7 @@
 package scheduler
 
 import (
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/libesz/poolmanager/pkg/controller"
@@ -12,7 +12,7 @@ func New() Scheduler {
 }
 
 func (s *Scheduler) AddController(c controller.Controller) {
-	fmt.Printf("Scheduler: added controller: %s\n", c.GetName())
+	log.Printf("Scheduler: added controller: %s\n", c.GetName())
 	s.enqueue(c)
 }
 
@@ -24,7 +24,7 @@ func (s *Scheduler) Run(config *controller.Config, stopChan chan struct{}) {
 	for {
 		select {
 		case c := <-s.taskChan:
-			fmt.Printf("Scheduler: executing controller: %s\n", c.GetName())
+			log.Printf("Scheduler: executing controller: %s\n", c.GetName())
 			reEnqueAfter := c.Act(*config)
 			go func(after time.Duration) {
 				time.Sleep(after)
