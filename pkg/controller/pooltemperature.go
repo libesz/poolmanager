@@ -53,7 +53,7 @@ func (c PoolTempController) GetConfigKeys() []string {
 	}
 }
 
-func (c PoolTempController) Act(config Config) time.Duration {
+func (c *PoolTempController) Act(config Config) time.Duration {
 	if c.pendingHeaterOperation != None {
 		if c.pendingHeaterOperation == On {
 			c.heaterOutput.Switch(true)

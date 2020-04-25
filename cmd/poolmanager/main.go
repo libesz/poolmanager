@@ -29,7 +29,7 @@ func main() {
 		s.Run(&config, stopChan)
 		wg.Done()
 	}()
-	s.AddController(&poolPumpController)
 	s.AddController(&poolTempController)
+	s.AddController(&poolPumpController)
 	wg.Wait()
 }

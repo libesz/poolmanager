@@ -6,21 +6,24 @@ import (
 )
 
 type MockHeater struct {
-	calledWith bool
+	calledWith    bool
+	switchReturns bool
 }
 
-func (t *MockHeater) Switch(value bool) bool {
-	t.calledWith = value
-	return true
+func (m *MockHeater) Switch(value bool) bool {
+	m.calledWith = value
+	return m.switchReturns
 }
 
 type MockPump struct {
-	calledWith bool
+	calledWith    bool
+	switchReturns bool
 }
 
-func (t *MockPump) Switch(value bool) bool {
-	t.calledWith = value
-	return false
+func (m *MockPump) Switch(value bool) bool {
+	m.calledWith = value
+	return m.switchReturns
+
 }
 
 type MockTempSensor struct {
@@ -61,14 +64,28 @@ func TestTemp(t *testing.T) {
 		t.Fatal("Heater output shall be stopped")
 	}
 
-	// Almost the expected time, according to the heater factor, it shall already work
+	// Almost the expected time, according to the heater factor, it shall already work.
+	// For first invocation it shall start the pump, for second it shall start the heater
 	tempSensor.Temperature = 25
 	c.now = func() time.Time {
 		return time.Date(2020, 04, 15, 9, 0, 0, 0, time.Local)
 	}
+	pumpOutput.switchReturns = true
+	c.Act(config)
+	if heater.calledWith != false {
+		t.Fatal("Heater output shall not be started before the pump")
+	}
+	if pumpOutput.calledWith != true {
+		t.Fatal("Pump output shall be started")
+	}
+
+	pumpOutput.switchReturns = false
 	c.Act(config)
 	if heater.calledWith != true {
-		t.Fatal("Heater output shall be started")
+		t.Fatal("Heater output shall be started now, as the pump already running")
+	}
+	if pumpOutput.calledWith != true {
+		t.Fatal("Pump output shall be also started")
 	}
 
 	// Expected time, temperature under the expected. Still heating.
