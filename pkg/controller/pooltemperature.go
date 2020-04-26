@@ -61,7 +61,6 @@ func (c *PoolTempController) Act(config Config) time.Duration {
 			c.heaterOutput.Switch(false)
 		}
 		c.pendingHeaterOperation = None
-		return 5 * time.Second
 	}
 	desiredTemp := config[configKeyTemp]
 	currentTemp := c.tempSensor.Value()
@@ -69,31 +68,18 @@ func (c *PoolTempController) Act(config Config) time.Duration {
 	nextStart := time.Date(now.Year(), now.Month(), now.Day(), int(config[configKeyStart]), 0, 0, 0, now.Local().Location())
 	nextStop := time.Date(now.Year(), now.Month(), now.Day(), int(config[configKeyEnd]), 0, 0, 0, now.Local().Location())
 
+	var thisManyHoursUntilNextStart float64
 	if now.After(nextStart) {
 		if now.Before(nextStop) {
-			if desiredTemp >= currentTemp {
-				log.Printf("In the active period, the temparature is %f, need more heat to reach %f\n", currentTemp, desiredTemp)
-				if c.pumpOutput.Switch(true) {
-					c.pendingHeaterOperation = On
-					return 5 * time.Second
-				}
-				c.heaterOutput.Switch(true)
-				return 5 * time.Second
-			}
-			log.Printf("In the active period, the temperature is %f, already fine\n", currentTemp)
-			if c.pumpOutput.Switch(false) {
-				c.pendingHeaterOperation = Off
-				return 5 * time.Second
-			}
-			c.heaterOutput.Switch(false)
-			return 5 * time.Second
+			nextStart = now
+		} else {
+			nextStart = nextStart.Add(24 * time.Hour)
 		}
-		nextStart = nextStart.Add(24 * time.Hour)
 	}
-	thisManyHoursUntilNextStart := nextStart.Sub(now).Hours()
+	thisManyHoursUntilNextStart = nextStart.Sub(now).Hours()
 	calculatedDesiredTemp := desiredTemp - thisManyHoursUntilNextStart*c.heaterFactor
 	if calculatedDesiredTemp >= currentTemp {
-		log.Printf("Not in the active period. Hours until the next one: %f. Calculated desired temperature: %f, need more heat\n", thisManyHoursUntilNextStart, calculatedDesiredTemp)
+		log.Printf("Hours until the next active period: %f. Calculated desired temperature: %f, need more heat\n", thisManyHoursUntilNextStart, calculatedDesiredTemp)
 		if c.pumpOutput.Switch(true) {
 			c.pendingHeaterOperation = On
 			return 5 * time.Second
