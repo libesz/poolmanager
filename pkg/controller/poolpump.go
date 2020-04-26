@@ -8,13 +8,14 @@ import (
 )
 
 type PoolPumpController struct {
-	timer io.InputOutput
+	timer      io.Input
+	pumpOutput io.Output
 }
 
 const configKey = "desired runtime per day"
 
-func NewPoolPumpController(timer io.InputOutput) PoolPumpController {
-	return PoolPumpController{timer: timer}
+func NewPoolPumpController(timer io.Input, pumpOutput io.Output) PoolPumpController {
+	return PoolPumpController{timer: timer, pumpOutput: pumpOutput}
 }
 
 func (c *PoolPumpController) GetConfigKeys() []string {
@@ -23,7 +24,7 @@ func (c *PoolPumpController) GetConfigKeys() []string {
 
 func (c *PoolPumpController) Act(config Config) []EnqueueRequest {
 	task := config[configKey] > c.timer.Value()
-	if c.timer.Switch(task) {
+	if c.pumpOutput.Switch(task) {
 		log.Printf("PoolPumpController: changed pump state to: %t", task)
 	}
 	return []EnqueueRequest{{Controller: c, After: 5 * time.Second}}

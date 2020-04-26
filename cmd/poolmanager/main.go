@@ -10,12 +10,11 @@ import (
 )
 
 func main() {
-	config := controller.Config{"desired runtime per day": 1, "desired temperature": 28, "start hour": 22, "end hour": 23}
+	config := controller.Config{"desired runtime per day": 1, "desired temperature": 28, "start hour": 12, "end hour": 15}
 	pumpOutput := io.DummyOutput{Name: "pumpOutput"}
-	pumpOrOutputMembers := io.NewOrOutput(&pumpOutput, 2)
-
-	timer := io.NewTimerOutput("pumpTimerOutput", &pumpOrOutputMembers[0], time.Now)
-	poolPumpController := controller.NewPoolPumpController(&timer)
+	timer := io.NewTimerOutput("pumpTimerOutput", &pumpOutput, time.Now)
+	pumpOrOutputMembers := io.NewOrOutput(&timer, 2)
+	poolPumpController := controller.NewPoolPumpController(&timer, &pumpOrOutputMembers[0])
 
 	tempSensor := io.DummyTempSensor{Temperature: 26}
 	heaterOutput := &io.DummyOutput{Name: "heater1"}
