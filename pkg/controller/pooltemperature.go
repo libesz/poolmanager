@@ -79,11 +79,11 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 			return []EnqueueRequest{{Controller: c, After: 5 * time.Second}}
 		}
 	}
-	desiredTemp := config[configKeyTemp]
+	desiredTemp := config[configKeyTemp].(float64)
 	currentTemp := c.tempSensor.Value()
 	now := c.now()
-	nextStart := time.Date(now.Year(), now.Month(), now.Day(), int(config[configKeyStart]), 0, 0, 0, now.Local().Location())
-	nextStop := time.Date(now.Year(), now.Month(), now.Day(), int(config[configKeyEnd]), 0, 0, 0, now.Local().Location())
+	nextStart := time.Date(now.Year(), now.Month(), now.Day(), config[configKeyStart].(int), 0, 0, 0, now.Local().Location())
+	nextStop := time.Date(now.Year(), now.Month(), now.Day(), config[configKeyEnd].(int), 0, 0, 0, now.Local().Location())
 
 	var thisManyHoursUntilNextStart float64
 	if now.After(nextStart) {

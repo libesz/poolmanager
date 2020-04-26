@@ -23,7 +23,7 @@ func (c *PoolPumpController) GetConfigKeys() []string {
 }
 
 func (c *PoolPumpController) Act(config Config) []EnqueueRequest {
-	task := config[configKey] > c.timer.Value()
+	task := config[configKey].(float64) > c.timer.Value()
 	if c.pumpOutput.Switch(task) {
 		log.Printf("PoolPumpController: changed pump state to: %t", task)
 	}

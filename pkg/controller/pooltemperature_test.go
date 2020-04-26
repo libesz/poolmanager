@@ -52,7 +52,7 @@ func TestTemp(t *testing.T) {
 		pumpOutput:   pumpOutput,
 		tempSensor:   tempSensor,
 	}
-	config := Config{"desired temperature": 28, "start hour": 10, "end hour": 13}
+	config := Config{"desired temperature": 28.0, "start hour": 10, "end hour": 13}
 
 	// Early morning, no heat
 	tempSensor.Temperature = 25

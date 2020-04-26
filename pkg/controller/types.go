@@ -2,7 +2,7 @@ package controller
 
 import "time"
 
-type Config map[string]float64
+type Config map[string]interface{}
 
 type EnqueueRequest struct {
 	Controller Controller

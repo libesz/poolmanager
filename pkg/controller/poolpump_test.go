@@ -29,7 +29,7 @@ func (t *MockTimer) Switch(value bool) bool {
 func TestNormal(t *testing.T) {
 	timer := &MockTimer{}
 	c := NewPoolPumpController(timer, timer)
-	config := Config{"desired runtime per day": 1}
+	config := Config{"desired runtime per day": 1.0}
 	c.Act(config)
 	if timer.calledWith != true {
 		t.Error("Timer output shall be started")
