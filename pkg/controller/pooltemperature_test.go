@@ -71,13 +71,17 @@ func TestTemp(t *testing.T) {
 		return time.Date(2020, 04, 15, 9, 0, 0, 0, time.Local)
 	}
 	pumpOutput.switchReturns = true
-	c.Act(config)
+	results := c.Act(config)
+	if len(results) != 2 {
+		t.Fatal("Controller shall return two controllers to enqueue")
+	}
 	if heater.calledWith != false {
 		t.Fatal("Heater output shall not be started before the pump")
 	}
 	if pumpOutput.calledWith != true {
 		t.Fatal("Pump output shall be started")
 	}
+	c.pendingHeaterOperation = false
 
 	pumpOutput.switchReturns = false
 	c.Act(config)
