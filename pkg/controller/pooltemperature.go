@@ -53,7 +53,7 @@ func (c PoolTempController) GetConfigKeys() []string {
 	}
 }
 
-func (c *PoolTempController) Act(config Config) time.Duration {
+func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 	if c.pendingHeaterOperation != None {
 		if c.pendingHeaterOperation == On {
 			c.heaterOutput.Switch(true)
@@ -82,18 +82,18 @@ func (c *PoolTempController) Act(config Config) time.Duration {
 		log.Printf("Hours until the next active period: %f. Calculated desired temperature: %f, need more heat\n", thisManyHoursUntilNextStart, calculatedDesiredTemp)
 		if c.pumpOutput.Switch(true) {
 			c.pendingHeaterOperation = On
-			return 5 * time.Second
+			return []EnqueueRequest{{Controller: c, After: 5 * time.Second}}
 		}
 		c.heaterOutput.Switch(true)
-		return 5 * time.Second
+		return []EnqueueRequest{{Controller: c, After: 5 * time.Second}}
 	}
 	log.Printf("The temperature is already fine\n")
 	if c.pumpOutput.Switch(false) {
 		c.pendingHeaterOperation = Off
-		return 5 * time.Second
+		return []EnqueueRequest{{Controller: c, After: 5 * time.Second}}
 	}
 	c.heaterOutput.Switch(false)
-	return 5 * time.Second
+	return []EnqueueRequest{{Controller: c, After: 5 * time.Second}}
 }
 
 func (c *PoolTempController) GetName() string {

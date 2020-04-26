@@ -25,11 +25,13 @@ func (s *Scheduler) Run(config *controller.Config, stopChan chan struct{}) {
 		select {
 		case c := <-s.taskChan:
 			log.Printf("Scheduler: executing controller: %s\n", c.GetName())
-			reEnqueAfter := c.Act(*config)
-			go func(after time.Duration) {
-				time.Sleep(after)
-				s.enqueue(c)
-			}(reEnqueAfter)
+			reEnqueAfterSet := c.Act(*config)
+			for _, reEnqueAfter := range reEnqueAfterSet {
+				go func(request controller.EnqueueRequest) {
+					time.Sleep(request.After)
+					s.enqueue(request.Controller)
+				}(reEnqueAfter)
+			}
 		case <-stopChan:
 			return
 		}

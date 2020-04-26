@@ -21,12 +21,12 @@ func (c *PoolPumpController) GetConfigKeys() []string {
 	return []string{configKey}
 }
 
-func (c *PoolPumpController) Act(config Config) time.Duration {
+func (c *PoolPumpController) Act(config Config) []EnqueueRequest {
 	task := config[configKey] > c.timer.Value()
 	if c.timer.Switch(task) {
 		log.Printf("PoolPumpController: changed pump state to: %t", task)
 	}
-	return 5 * time.Second
+	return []EnqueueRequest{{Controller: c, After: 5 * time.Second}}
 }
 
 func (c *PoolPumpController) GetName() string {
