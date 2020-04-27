@@ -55,7 +55,7 @@ type delayedHeaterOperation struct {
 
 func (c *delayedHeaterOperation) Act(config Config) []EnqueueRequest {
 	log.Printf("DelayedHeaterOperation set heater to: %t\n", c.setTo)
-	c.heater.Switch(c.setTo)
+	c.heater.Set(c.setTo)
 	close(c.pendingHeaterOperationReady)
 	return nil
 }
@@ -97,21 +97,21 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 	calculatedDesiredTemp := desiredTemp - thisManyHoursUntilNextStart*c.heaterFactor
 	if calculatedDesiredTemp >= currentTemp {
 		log.Printf("Hours until the next active period: %f. Calculated desired temperature: %f, need more heat\n", thisManyHoursUntilNextStart, calculatedDesiredTemp)
-		if c.pumpOutput.Switch(true) {
+		if c.pumpOutput.Set(true) {
 			c.pendingHeaterOperation = true
 			pending := delayedHeaterOperation{setTo: true, heater: c.heaterOutput, pendingHeaterOperationReady: c.pendingHeaterOperationReady}
 			return []EnqueueRequest{{Controller: c, After: 5 * time.Second}, {Controller: &pending, After: 6 * time.Second}}
 		}
-		c.heaterOutput.Switch(true)
+		c.heaterOutput.Set(true)
 		return []EnqueueRequest{{Controller: c, After: 5 * time.Second}}
 	}
 	log.Printf("The temperature is already fine\n")
-	if c.pumpOutput.Switch(false) {
+	if c.pumpOutput.Set(false) {
 		c.pendingHeaterOperation = true
 		pending := delayedHeaterOperation{setTo: false, heater: c.heaterOutput, pendingHeaterOperationReady: c.pendingHeaterOperationReady}
 		return []EnqueueRequest{{Controller: c, After: 5 * time.Second}, {Controller: &pending, After: 6 * time.Second}}
 	}
-	c.heaterOutput.Switch(false)
+	c.heaterOutput.Set(false)
 	return []EnqueueRequest{{Controller: c, After: 5 * time.Second}}
 }
 

@@ -5,8 +5,10 @@ import (
 )
 
 type MockTimer struct {
-	nextValue  float64
-	calledWith bool
+	nextValue     float64
+	setCalledWith bool
+	setReturns    bool
+	getReturns    bool
 }
 
 func (t *MockTimer) Type() string {
@@ -22,8 +24,12 @@ func (t *MockTimer) Value() float64 {
 }
 
 func (t *MockTimer) Set(value bool) bool {
-	t.calledWith = value
-	return false
+	t.setCalledWith = value
+	return t.setReturns
+}
+
+func (t *MockTimer) Get() bool {
+	return t.getReturns
 }
 
 func TestNormal(t *testing.T) {
@@ -31,12 +37,12 @@ func TestNormal(t *testing.T) {
 	c := NewPoolPumpController(timer, timer)
 	config := Config{"desired runtime per day": 1.0}
 	c.Act(config)
-	if timer.calledWith != true {
+	if timer.setCalledWith != true {
 		t.Error("Timer output shall be started")
 	}
 	timer.nextValue = 3
 	c.Act(config)
-	if timer.calledWith != false {
+	if timer.setCalledWith != false {
 		t.Error("Timer output shall be stopped")
 	}
 }

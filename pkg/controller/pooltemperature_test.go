@@ -6,24 +6,33 @@ import (
 )
 
 type MockHeater struct {
-	calledWith    bool
-	switchReturns bool
+	calledWith bool
+	setReturns bool
+	getReturns bool
 }
 
 func (m *MockHeater) Set(value bool) bool {
 	m.calledWith = value
-	return m.switchReturns
+	return m.setReturns
+}
+
+func (m *MockHeater) Get() bool {
+	return m.getReturns
 }
 
 type MockPump struct {
-	calledWith    bool
-	switchReturns bool
+	calledWith bool
+	setReturn  bool
+	getReturn  bool
 }
 
 func (m *MockPump) Set(value bool) bool {
 	m.calledWith = value
-	return m.switchReturns
+	return m.setReturn
+}
 
+func (m *MockPump) Get() bool {
+	return m.getReturn
 }
 
 type MockTempSensor struct {
@@ -70,7 +79,7 @@ func TestTemp(t *testing.T) {
 	c.now = func() time.Time {
 		return time.Date(2020, 04, 15, 9, 0, 0, 0, time.Local)
 	}
-	pumpOutput.switchReturns = true
+	pumpOutput.setReturn = true
 	results := c.Act(config)
 	if len(results) != 2 {
 		t.Fatal("Controller shall return two controllers to enqueue")
@@ -83,7 +92,7 @@ func TestTemp(t *testing.T) {
 	}
 	c.pendingHeaterOperation = false
 
-	pumpOutput.switchReturns = false
+	pumpOutput.setReturn = false
 	c.Act(config)
 	if heater.calledWith != true {
 		t.Fatal("Heater output shall be started now, as the pump already running")

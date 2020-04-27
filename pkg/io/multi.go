@@ -28,6 +28,10 @@ func (o *OrOutputMember) Set(value bool) bool {
 	return o.master.setMemberState(o.id, value)
 }
 
+func (o *OrOutputMember) Get() bool {
+	return o.master.realOutput.Get()
+}
+
 func (o *OrOutput) setMemberState(i int, value bool) bool {
 	o.memberStates[i] = value
 	for _, memberState := range o.memberStates {

@@ -64,3 +64,7 @@ func (t *TimerOutput) Set(value bool) bool {
 	t.lastValue = value
 	return t.output.Set(value)
 }
+
+func (t *TimerOutput) Get() bool {
+	return t.output.Get()
+}

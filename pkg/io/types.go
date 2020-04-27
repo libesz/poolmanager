@@ -8,4 +8,5 @@ type Input interface {
 
 type Output interface {
 	Set(bool) bool
+	Get() bool
 }

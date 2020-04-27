@@ -16,3 +16,7 @@ func (a *DummyOutput) Set(value bool) bool {
 	a.Value = value
 	return true
 }
+
+func (a *DummyOutput) Get() bool {
+	return a.Value
+}
