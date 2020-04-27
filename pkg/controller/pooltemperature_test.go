@@ -90,7 +90,7 @@ func TestTemp(t *testing.T) {
 	if pumpOutput.calledWith != true {
 		t.Fatal("Pump output shall be started")
 	}
-	c.pendingHeaterOperation = false
+	c.pendingOperation = false
 
 	pumpOutput.setReturn = false
 	c.Act(config)

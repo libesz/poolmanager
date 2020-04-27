@@ -14,23 +14,23 @@ func NewPoolTempController(
 	pumpOutput io.Output,
 	now func() time.Time) PoolTempController {
 	return PoolTempController{
-		heaterFactor:                heaterFactor,
-		tempSensor:                  tempSensor,
-		heaterOutput:                heaterOutput,
-		pumpOutput:                  pumpOutput,
-		now:                         now,
-		pendingHeaterOperationReady: make(chan struct{}, 1),
+		heaterFactor:          heaterFactor,
+		tempSensor:            tempSensor,
+		heaterOutput:          heaterOutput,
+		pumpOutput:            pumpOutput,
+		now:                   now,
+		pendingOperationReady: make(chan struct{}, 1),
 	}
 }
 
 type PoolTempController struct {
-	heaterFactor                float64
-	tempSensor                  io.Input
-	heaterOutput                io.Output
-	pumpOutput                  io.Output
-	pendingHeaterOperation      bool
-	pendingHeaterOperationReady chan struct{}
-	now                         func() time.Time
+	heaterFactor          float64
+	tempSensor            io.Input
+	heaterOutput          io.Output
+	pumpOutput            io.Output
+	pendingOperation      bool
+	pendingOperationReady chan struct{}
+	now                   func() time.Time
 }
 
 const (
@@ -47,33 +47,33 @@ func (c PoolTempController) GetConfigKeys() []string {
 	}
 }
 
-type delayedHeaterOperation struct {
-	setTo                       bool
-	heater                      io.Output
-	pendingHeaterOperationReady chan struct{}
+type delayedOperation struct {
+	setTo                 bool
+	output                io.Output
+	pendingOperationReady chan struct{}
 }
 
-func (c *delayedHeaterOperation) Act(config Config) []EnqueueRequest {
-	log.Printf("DelayedHeaterOperation set heater to: %t\n", c.setTo)
-	c.heater.Set(c.setTo)
-	close(c.pendingHeaterOperationReady)
+func (c *delayedOperation) Act(config Config) []EnqueueRequest {
+	log.Printf("delayedOperation set heater to: %t\n", c.setTo)
+	c.output.Set(c.setTo)
+	close(c.pendingOperationReady)
 	return nil
 }
 
-func (c *delayedHeaterOperation) GetName() string {
-	return "DelayedHeaterOperation"
+func (c *delayedOperation) GetName() string {
+	return "delayedOperation"
 }
 
-func (c delayedHeaterOperation) GetConfigKeys() []string {
+func (c delayedOperation) GetConfigKeys() []string {
 	return []string{}
 }
 
 func (c *PoolTempController) Act(config Config) []EnqueueRequest {
-	if c.pendingHeaterOperation {
+	if c.pendingOperation {
 		select {
-		case <-c.pendingHeaterOperationReady:
-			c.pendingHeaterOperation = false
-			c.pendingHeaterOperationReady = make(chan struct{}, 1)
+		case <-c.pendingOperationReady:
+			c.pendingOperation = false
+			c.pendingOperationReady = make(chan struct{}, 1)
 		default:
 			log.Printf("Pending heater operation is ongoing.")
 			return []EnqueueRequest{{Controller: c, After: 5 * time.Second}}
@@ -98,20 +98,20 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 	if calculatedDesiredTemp >= currentTemp {
 		log.Printf("Hours until the next active period: %f. Calculated desired temperature: %f, need more heat\n", thisManyHoursUntilNextStart, calculatedDesiredTemp)
 		if c.pumpOutput.Set(true) {
-			c.pendingHeaterOperation = true
-			pending := delayedHeaterOperation{setTo: true, heater: c.heaterOutput, pendingHeaterOperationReady: c.pendingHeaterOperationReady}
+			c.pendingOperation = true
+			pending := delayedOperation{setTo: true, output: c.heaterOutput, pendingOperationReady: c.pendingOperationReady}
 			return []EnqueueRequest{{Controller: c, After: 5 * time.Second}, {Controller: &pending, After: 6 * time.Second}}
 		}
 		c.heaterOutput.Set(true)
 		return []EnqueueRequest{{Controller: c, After: 5 * time.Second}}
 	}
 	log.Printf("The temperature is already fine\n")
-	if c.pumpOutput.Set(false) {
-		c.pendingHeaterOperation = true
-		pending := delayedHeaterOperation{setTo: false, heater: c.heaterOutput, pendingHeaterOperationReady: c.pendingHeaterOperationReady}
+	if c.heaterOutput.Set(false) {
+		c.pendingOperation = true
+		pending := delayedOperation{setTo: false, output: c.pumpOutput, pendingOperationReady: c.pendingOperationReady}
 		return []EnqueueRequest{{Controller: c, After: 5 * time.Second}, {Controller: &pending, After: 6 * time.Second}}
 	}
-	c.heaterOutput.Set(false)
+	c.pumpOutput.Set(false)
 	return []EnqueueRequest{{Controller: c, After: 5 * time.Second}}
 }
 
