@@ -10,7 +10,7 @@ type MockHeater struct {
 	switchReturns bool
 }
 
-func (m *MockHeater) Switch(value bool) bool {
+func (m *MockHeater) Set(value bool) bool {
 	m.calledWith = value
 	return m.switchReturns
 }
@@ -20,7 +20,7 @@ type MockPump struct {
 	switchReturns bool
 }
 
-func (m *MockPump) Switch(value bool) bool {
+func (m *MockPump) Set(value bool) bool {
 	m.calledWith = value
 	return m.switchReturns
 

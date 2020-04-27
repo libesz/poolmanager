@@ -21,7 +21,7 @@ func (t *MockTimer) Value() float64 {
 	return t.nextValue
 }
 
-func (t *MockTimer) Switch(value bool) bool {
+func (t *MockTimer) Set(value bool) bool {
 	t.calledWith = value
 	return false
 }

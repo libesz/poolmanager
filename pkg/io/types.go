@@ -7,10 +7,5 @@ type Input interface {
 }
 
 type Output interface {
-	Switch(bool) bool
-}
-
-type InputOutput interface {
-	Input
-	Output
+	Set(bool) bool
 }

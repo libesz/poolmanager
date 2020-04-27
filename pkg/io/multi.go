@@ -8,9 +8,9 @@ func NewMultiOutput(realOutputs []Output) MultiOutput {
 	return MultiOutput{realOutputs: realOutputs}
 }
 
-func (m MultiOutput) Switch(value bool) {
+func (m MultiOutput) Set(value bool) {
 	for _, output := range m.realOutputs {
-		output.Switch(value)
+		output.Set(value)
 	}
 }
 
@@ -24,7 +24,7 @@ type OrOutput struct {
 	memberStates map[int]bool
 }
 
-func (o *OrOutputMember) Switch(value bool) bool {
+func (o *OrOutputMember) Set(value bool) bool {
 	return o.master.setMemberState(o.id, value)
 }
 
@@ -32,10 +32,10 @@ func (o *OrOutput) setMemberState(i int, value bool) bool {
 	o.memberStates[i] = value
 	for _, memberState := range o.memberStates {
 		if memberState {
-			return o.realOutput.Switch(true)
+			return o.realOutput.Set(true)
 		}
 	}
-	return o.realOutput.Switch(false)
+	return o.realOutput.Set(false)
 }
 
 func NewOrOutput(realOutput Output, amount int) []OrOutputMember {

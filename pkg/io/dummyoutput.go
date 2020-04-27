@@ -7,7 +7,7 @@ type DummyOutput struct {
 	Value bool
 }
 
-func (a *DummyOutput) Switch(value bool) bool {
+func (a *DummyOutput) Set(value bool) bool {
 	if a.Value == value {
 		log.Printf("Dummy %s unchanged: %t\n", a.Name, value)
 		return false
