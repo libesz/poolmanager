@@ -21,15 +21,22 @@ func main() {
 	heaterOutput := &io.DummyOutput{Name: "heater1"}
 	tempController := controller.NewPoolTempController(0.5, &tempSensor, heaterOutput, &pumpOrOutputMembers[1], time.Now)
 
-	s := scheduler.New()
 	stopChan := make(chan struct{})
 	wg := sync.WaitGroup{}
+	wg.Add(1)
+	c := scheduler.NewConfigStore()
+	go func() {
+		c.Run(stopChan)
+		wg.Done()
+	}()
+
+	s := scheduler.New(&c)
 	wg.Add(1)
 	go func() {
 		s.Run(stopChan)
 		wg.Done()
 	}()
-	s.AddController(&tempController, &tempControllerConfig)
-	s.AddController(&pumpController, &pumpControllerConfig)
+	s.AddController(&tempController, tempControllerConfig)
+	s.AddController(&pumpController, pumpControllerConfig)
 	wg.Wait()
 }
