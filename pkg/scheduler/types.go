@@ -17,8 +17,9 @@ type configStoreGetArgs struct {
 }
 
 type ConfigStore struct {
-	setChan chan configStoreSetArgs
-	getChan chan configStoreGetArgs
+	setChan     chan configStoreSetArgs
+	getChan     chan configStoreGetArgs
+	getKeysChan chan chan []string
 }
 
 type Scheduler struct {

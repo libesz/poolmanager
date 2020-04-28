@@ -4,8 +4,9 @@ import "github.com/libesz/poolmanager/pkg/controller"
 
 func NewConfigStore() ConfigStore {
 	return ConfigStore{
-		setChan: make(chan configStoreSetArgs),
-		getChan: make(chan configStoreGetArgs),
+		setChan:     make(chan configStoreSetArgs),
+		getChan:     make(chan configStoreGetArgs),
+		getKeysChan: make(chan chan []string),
 	}
 }
 
@@ -19,6 +20,12 @@ func (s *ConfigStore) Get(name string) controller.Config {
 	return <-resultChan
 }
 
+func (s *ConfigStore) GetKeys() []string {
+	resultChan := make(chan []string)
+	s.getKeysChan <- resultChan
+	return <-resultChan
+}
+
 func (s *ConfigStore) Run(stopChan chan struct{}) {
 	all := configSet{}
 	for {
@@ -29,6 +36,12 @@ func (s *ConfigStore) Run(stopChan chan struct{}) {
 			getRequest.resultChan <- all[getRequest.name]
 		case setRequest := <-s.setChan:
 			all[setRequest.name] = setRequest.config
+		case getKeysResponseChan := <-s.getKeysChan:
+			var result []string
+			for key := range all {
+				result = append(result, key)
+			}
+			getKeysResponseChan <- result
 		}
 	}
 }

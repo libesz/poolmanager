@@ -7,6 +7,7 @@ import (
 	"github.com/libesz/poolmanager/pkg/controller"
 	"github.com/libesz/poolmanager/pkg/io"
 	"github.com/libesz/poolmanager/pkg/scheduler"
+	"github.com/libesz/poolmanager/pkg/webui"
 )
 
 func main() {
@@ -38,5 +39,6 @@ func main() {
 	}()
 	s.AddController(&tempController, tempControllerConfig)
 	s.AddController(&pumpController, pumpControllerConfig)
+	webui.Run(&c)
 	wg.Wait()
 }
