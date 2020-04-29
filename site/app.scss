@@ -1,9 +1,17 @@
 @use '@material/button/mdc-button';
 @use '@material/button';
+@use '@material/slider';
+@use '@material/slider/mdc-slider';
 @use "@material/top-app-bar/mdc-top-app-bar";
 @use "@material/icon-button/mdc-icon-button";
+@use "@material/typography/mdc-typography";
+@import "@material/layout-grid/mdc-layout-grid";
 
+html, body {
+    height: 100%;
+}
+  
 .home {
-    display: flex; // Flexbox is used to easily arrange the persistent drawer and content side-by-side
+    display: flex;
     margin: 0px;
 }

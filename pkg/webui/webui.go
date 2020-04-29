@@ -27,6 +27,10 @@ func Run(configStore *scheduler.ConfigStore) {
 		homeHandler(configStore, w, r)
 	}).Methods("GET")
 
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		homePostHandler(configStore, w, r)
+	}).Methods("POST")
+
 	srv := &http.Server{
 		Handler:      r,
 		Addr:         ":8000",
@@ -45,6 +49,8 @@ type ConfigItemWithType struct {
 
 type PageData struct {
 	AllConfig map[string][]ConfigItemWithType
+	Function  string
+	Debug     string
 }
 
 func homeHandler(configStore *scheduler.ConfigStore, w http.ResponseWriter, r *http.Request) {
@@ -68,7 +74,17 @@ func homeHandler(configStore *scheduler.ConfigStore, w http.ResponseWriter, r *h
 			allConfig[controller] = append(allConfig[controller], item)
 		}
 	}
-	data := PageData{AllConfig: allConfig}
+	data := PageData{AllConfig: allConfig, Function: "default"}
+	log.Printf("%+v\n", data)
+	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
+		log.Println(err.Error())
+	}
+}
+
+func homePostHandler(configStore *scheduler.ConfigStore, w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	r.ParseForm()
+	data := PageData{Function: "debug", Debug: r.PostForm.Encode()}
 	log.Printf("%+v\n", data)
 	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
 		log.Println(err.Error())

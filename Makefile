@@ -1,8 +1,8 @@
-install-npm-deps:
-	$(MAKE) -C site install-npm-deps
+build-design:
+	$(MAKE) -C site build-design
 
-build-site:
-	$(MAKE) -C site build-site
-
-build:
-	go build cmd/poolmanager/main.go 
+build: build-design
+	cp site/dist/* pkg/webui/content/static/raw
+	go generate github.com/libesz/poolmanager/pkg/webui/content/static
+	go generate github.com/libesz/poolmanager/pkg/webui/content/templates
+	go build cmd/poolmanager/main.go

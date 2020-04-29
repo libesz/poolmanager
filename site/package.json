@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "@material/auto-init": "^6.0.0",
     "@material/ripple": "^6.0.0",
-    "material-components-web": "^6.0.0"
+    "@material/slider": "^6.0.0",
+    "material-components-web": "^6.0.0",
+    "node-gyp": "^6.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
