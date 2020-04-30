@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -18,12 +19,29 @@ func NewPoolPumpController(timer io.Input, pumpOutput io.Output) PoolPumpControl
 	return PoolPumpController{timer: timer, pumpOutput: pumpOutput}
 }
 
-func (c *PoolPumpController) GetConfigKeys() []string {
-	return []string{configKey}
+func (c *PoolPumpController) GetConfig() ConfigProperties {
+	return ConfigProperties{
+		configKey: ConfigProperty{
+			Default: 2,
+			Min:     0,
+			Max:     8,
+		},
+	}
+}
+
+func (c *PoolPumpController) ValidateConfig(config Config) error {
+	time, ok := config[configKey].(int)
+	if !ok {
+		return fmt.Errorf("Configured type is not int")
+	}
+	if time < 0 || time > 8 {
+		return fmt.Errorf("Configured type is outside of the allowed range")
+	}
+	return nil
 }
 
 func (c *PoolPumpController) Act(config Config) []EnqueueRequest {
-	task := config[configKey].(float64) > c.timer.Value()
+	task := config[configKey].(int) > (int(c.timer.Value()) - 1)
 	if c.pumpOutput.Set(task) {
 		log.Printf("PoolPumpController: changed pump state to: %t", task)
 	}

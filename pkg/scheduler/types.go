@@ -4,11 +4,22 @@ import (
 	"github.com/libesz/poolmanager/pkg/controller"
 )
 
-type configSet map[string]controller.Config
+type configSetItem struct {
+	controller controller.Controller
+	config     controller.Config
+}
+
+type configSet map[string]*configSetItem
 
 type configStoreSetArgs struct {
-	name   string
-	config controller.Config
+	controller controller.Controller
+	config     controller.Config
+	resultChan chan error
+}
+
+type configStoreGetPropertiesArgs struct {
+	name       string
+	resultChan chan controller.ConfigProperties
 }
 
 type configStoreGetArgs struct {
@@ -17,9 +28,10 @@ type configStoreGetArgs struct {
 }
 
 type ConfigStore struct {
-	setChan     chan configStoreSetArgs
-	getChan     chan configStoreGetArgs
-	getKeysChan chan chan []string
+	setChan           chan configStoreSetArgs
+	getChan           chan configStoreGetArgs
+	getKeysChan       chan chan []string
+	getPropertiesChan chan configStoreGetPropertiesArgs
 }
 
 type Scheduler struct {

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -39,12 +40,52 @@ const (
 	configKeyEnd   = "end hour"
 )
 
-func (c PoolTempController) GetConfigKeys() []string {
-	return []string{
-		configKeyTemp,
-		configKeyStart,
-		configKeyEnd,
+func (c PoolTempController) GetConfig() ConfigProperties {
+	return ConfigProperties{
+		configKeyTemp: ConfigProperty{
+			Default: 25.0,
+			Min:     20.0,
+			Max:     30.0,
+		},
+		configKeyStart: ConfigProperty{
+			Default: 13,
+			Min:     0,
+			Max:     23,
+		},
+		configKeyEnd: ConfigProperty{
+			Default: 16,
+			Min:     0,
+			Max:     23,
+		},
 	}
+}
+
+func (c PoolTempController) ValidateConfig(config Config) error {
+	temp, ok := config[configKeyTemp].(float64)
+	if !ok {
+		return fmt.Errorf("Temperature is not a float")
+	}
+	if temp < 20.0 || temp > 30.0 {
+		return fmt.Errorf("Temperature is outside of the allowed range")
+	}
+	start, ok := config[configKeyStart].(int)
+	if !ok {
+		return fmt.Errorf("Start time it not an int")
+	}
+	if start < 0 || start > 23 {
+		return fmt.Errorf("Start time is outside of the allowed range")
+	}
+	end, ok := config[configKeyEnd].(int)
+	if !ok {
+		return fmt.Errorf("Start time it not an int")
+	}
+	if end < 0 || end > 23 {
+		return fmt.Errorf("Start time is outside of the allowed range")
+	}
+	if start > end {
+		return fmt.Errorf("Start time set to earlier than end time")
+	}
+	return nil
 }
 
 type delayedOperation struct {
@@ -64,8 +105,12 @@ func (c *delayedOperation) GetName() string {
 	return "delayedOperation"
 }
 
-func (c delayedOperation) GetConfigKeys() []string {
-	return []string{}
+func (c delayedOperation) GetConfig() ConfigProperties {
+	return ConfigProperties{}
+}
+
+func (c delayedOperation) ValidateConfig(Config) error {
+	return nil
 }
 
 func (c *PoolTempController) Act(config Config) []EnqueueRequest {

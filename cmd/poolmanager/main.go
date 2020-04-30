@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cloudflare/cfssl/log"
 	"github.com/libesz/poolmanager/pkg/controller"
 	"github.com/libesz/poolmanager/pkg/io"
 	"github.com/libesz/poolmanager/pkg/scheduler"
@@ -11,7 +12,7 @@ import (
 )
 
 func main() {
-	pumpControllerConfig := controller.Config{"desired runtime per day": 1.0}
+	pumpControllerConfig := controller.Config{"desired runtime per day": 1}
 	pumpOutput := io.DummyOutput{Name: "pumpOutput"}
 	timer := io.NewTimerOutput("pumpTimerOutput", &pumpOutput, time.Now)
 	pumpOrOutputMembers := io.NewOrOutput(&timer, 2)
@@ -37,8 +38,12 @@ func main() {
 		s.Run(stopChan)
 		wg.Done()
 	}()
-	s.AddController(&tempController, tempControllerConfig)
-	s.AddController(&pumpController, pumpControllerConfig)
+	if err := s.AddController(&tempController, tempControllerConfig); err != nil {
+		log.Fatalf("Failed to add tempController: %s\n", err.Error())
+	}
+	if err := s.AddController(&pumpController, pumpControllerConfig); err != nil {
+		log.Fatalf("Failed to add pumpController: %s\n", err.Error())
+	}
 	webui.Run(&c)
 	wg.Wait()
 }

@@ -11,10 +11,14 @@ func New(configStore *ConfigStore) Scheduler {
 	return Scheduler{taskChan: make(chan controller.Controller), configStore: configStore}
 }
 
-func (s *Scheduler) AddController(c controller.Controller, config controller.Config) {
+func (s *Scheduler) AddController(c controller.Controller, config controller.Config) error {
 	log.Printf("Scheduler: added controller: %s\n", c.GetName())
-	s.configStore.Set(c.GetName(), config)
+	err := s.configStore.Set(c, config)
+	if err != nil {
+		return err
+	}
 	s.enqueue(c)
+	return nil
 }
 
 func (s *Scheduler) enqueue(c controller.Controller) {
