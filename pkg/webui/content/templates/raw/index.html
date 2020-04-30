@@ -31,7 +31,7 @@
                     <p>{{$item.Key}}:</p>
                     {{if eq $item.DetectedType "int"}}
                     <div class="mdc-slider mdc-slider--discrete" tabindex="0" role="slider"
-                        aria-valuemin="15" aria-valuemax="30" aria-valuenow="{{$item.Value}}"
+                        aria-valuemin="{{$item.Property.Min}}" aria-valuemax="{{$item.Property.Max}}" aria-valuenow="{{$item.Value}}"
                         aria-label="Select Value">
                       <div class="mdc-slider__track-container">
                         <div class="mdc-slider__track"></div>

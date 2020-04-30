@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+	"github.com/libesz/poolmanager/pkg/controller"
 	"github.com/libesz/poolmanager/pkg/scheduler"
 	"github.com/libesz/poolmanager/pkg/webui/content/static"
 	"github.com/libesz/poolmanager/pkg/webui/content/templates"
@@ -44,6 +45,7 @@ func Run(configStore *scheduler.ConfigStore) {
 type ConfigItemWithType struct {
 	Key          string
 	DetectedType string
+	Property     controller.ConfigProperty
 	Value        interface{}
 }
 
@@ -58,18 +60,15 @@ func homeHandler(configStore *scheduler.ConfigStore, w http.ResponseWriter, r *h
 	allConfig := make(map[string][]ConfigItemWithType)
 	controllers := configStore.GetKeys()
 	for _, controller := range controllers {
-		configForController := configStore.Get(controller)
-		for key, value := range configForController {
-			item := ConfigItemWithType{Key: key, Value: value}
-			switch value.(type) {
+		configPropertiesForController := configStore.GetProperties(controller)
+		configValuesForController := configStore.Get(controller)
+		for key, property := range configPropertiesForController {
+			item := ConfigItemWithType{Key: key, Property: property, Value: configValuesForController[key]}
+			switch property.Default.(type) {
 			case int:
 				item.DetectedType = "int"
 			case float64:
 				item.DetectedType = "float64"
-			case bool:
-				item.DetectedType = "bool"
-			case string:
-				item.DetectedType = "string"
 			}
 			allConfig[controller] = append(allConfig[controller], item)
 		}
