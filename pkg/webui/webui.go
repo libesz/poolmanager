@@ -45,7 +45,7 @@ func Run(configStore *scheduler.ConfigStore) {
 type ConfigItemWithType struct {
 	Key          string
 	DetectedType string
-	Property     controller.ConfigProperty
+	Range        controller.ConfigRange
 	Value        interface{}
 }
 
@@ -59,18 +59,17 @@ func homeHandler(configStore *scheduler.ConfigStore, w http.ResponseWriter, r *h
 	w.WriteHeader(http.StatusOK)
 	allConfig := make(map[string][]ConfigItemWithType)
 	controllers := configStore.GetKeys()
-	for _, controller := range controllers {
-		configPropertiesForController := configStore.GetProperties(controller)
-		configValuesForController := configStore.Get(controller)
+	for _, controllerName := range controllers {
+		configPropertiesForController := configStore.GetProperties(controllerName)
+		configValuesForController := configStore.Get(controllerName)
 		for key, property := range configPropertiesForController {
-			item := ConfigItemWithType{Key: key, Property: property, Value: configValuesForController[key]}
-			switch property.Default.(type) {
-			case int:
-				item.DetectedType = "int"
-			case float64:
-				item.DetectedType = "float64"
+			item := ConfigItemWithType{Key: key, Value: configValuesForController[key]}
+			switch property.(type) {
+			case controller.ConfigRange:
+				item.DetectedType = "range"
+				item.Range = property.(controller.ConfigRange)
 			}
-			allConfig[controller] = append(allConfig[controller], item)
+			allConfig[controllerName] = append(allConfig[controllerName], item)
 		}
 	}
 	data := PageData{AllConfig: allConfig, Function: "default"}

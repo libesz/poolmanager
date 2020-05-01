@@ -29,28 +29,19 @@
                 <h2 class="mdc-typography--headline6">Controller: {{$controller}}</h2>
                   {{range $index, $item := $config}}
                     <p>{{$item.Key}}:</p>
-                    {{if eq $item.DetectedType "int"}}
-                    <div class="mdc-slider mdc-slider--discrete" tabindex="0" role="slider"
-                        aria-valuemin="{{$item.Property.Min}}" aria-valuemax="{{$item.Property.Max}}" aria-valuenow="{{$item.Value}}"
-                        aria-label="Select Value">
+                    {{if eq $item.DetectedType "range"}}
+                    <div class="mdc-slider" tabindex="0" role="slider"
+                      aria-valuemin="{{$item.Range.Min}}" aria-valuemax="{{$item.Range.Max}}" aria-valuenow="{{$item.Value}}"
+                      aria-label="Select Value" data-step="{{$item.Range.Step}}">
                       <div class="mdc-slider__track-container">
                         <div class="mdc-slider__track"></div>
                       </div>
                       <div class="mdc-slider__thumb-container">
-                        <div class="mdc-slider__pin">
-                          <span class="mdc-slider__pin-value-marker"></span>
-                        </div>
                         <svg class="mdc-slider__thumb" width="21" height="21">
                           <circle cx="10.5" cy="10.5" r="7.875"></circle>
                         </svg>
                         <div class="mdc-slider__focus-ring"></div>
                       </div>
-                    </div>
-                    {{else if eq $item.DetectedType "float64"}}
-                    <div class="mdl-textfield mdl-js-textfield">
-                      <input class="mdl-textfield__input" type="text" id="{{$controller}}-{{$item.Key}}" name="{{$controller}}-{{$item.Key}}" pattern="[1-9\.]*" value="{{$item.Value}}">
-                      <span class="mdl-textfield__error">Floating number only</span>
-                      <label class="mdl-textfield__label" for="{{$item.Key}}">{{$item.Key}}</label>
                     </div>
                     {{end}}
                   {{end}}

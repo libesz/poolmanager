@@ -42,20 +42,23 @@ const (
 
 func (c PoolTempController) GetConfig() ConfigProperties {
 	return ConfigProperties{
-		configKeyTemp: ConfigProperty{
+		configKeyTemp: ConfigRange{
 			Default: 25.0,
 			Min:     20.0,
 			Max:     30.0,
+			Step:    0.5,
 		},
-		configKeyStart: ConfigProperty{
+		configKeyStart: ConfigRange{
 			Default: 13,
 			Min:     0,
 			Max:     23,
+			Step:    1,
 		},
-		configKeyEnd: ConfigProperty{
+		configKeyEnd: ConfigRange{
 			Default: 16,
 			Min:     0,
 			Max:     23,
+			Step:    1,
 		},
 	}
 }
@@ -67,6 +70,9 @@ func (c PoolTempController) ValidateConfig(config Config) error {
 	}
 	if temp < 20.0 || temp > 30.0 {
 		return fmt.Errorf("Temperature is outside of the allowed range")
+	}
+	if int(temp*10)%5 != 0 {
+		return fmt.Errorf("Temperature is not a valid step (.0 or .5 required)")
 	}
 	start, ok := config[configKeyStart].(int)
 	if !ok {

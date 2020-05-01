@@ -21,10 +21,11 @@ func NewPoolPumpController(timer io.Input, pumpOutput io.Output) PoolPumpControl
 
 func (c *PoolPumpController) GetConfig() ConfigProperties {
 	return ConfigProperties{
-		configKey: ConfigProperty{
+		configKey: ConfigRange{
 			Default: 2,
 			Min:     0,
 			Max:     8,
+			Step:    1,
 		},
 	}
 }

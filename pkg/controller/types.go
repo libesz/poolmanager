@@ -2,13 +2,14 @@ package controller
 
 import "time"
 
-type ConfigProperty struct {
-	Min     interface{}
-	Max     interface{}
-	Default interface{}
+type ConfigRange struct {
+	Min     float64
+	Max     float64
+	Step    float64
+	Default float64
 }
 
-type ConfigProperties map[string]ConfigProperty
+type ConfigProperties map[string]interface{}
 
 type Config map[string]interface{}
 
