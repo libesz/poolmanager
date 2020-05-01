@@ -46,6 +46,7 @@ type ConfigItemWithType struct {
 	Key          string
 	DetectedType string
 	Range        controller.ConfigRange
+	Toggle       controller.ConfigToggle
 	Value        interface{}
 }
 
@@ -68,6 +69,9 @@ func homeHandler(configStore *scheduler.ConfigStore, w http.ResponseWriter, r *h
 			case controller.ConfigRange:
 				item.DetectedType = "range"
 				item.Range = property.(controller.ConfigRange)
+			case controller.ConfigToggle:
+				item.DetectedType = "toggle"
+				item.Toggle = property.(controller.ConfigToggle)
 			}
 			allConfig[controllerName] = append(allConfig[controllerName], item)
 		}

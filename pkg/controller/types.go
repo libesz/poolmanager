@@ -9,6 +9,10 @@ type ConfigRange struct {
 	Default float64
 }
 
+type ConfigToggle struct {
+	Default bool
+}
+
 type ConfigProperties map[string]interface{}
 
 type Config map[string]interface{}
@@ -20,7 +24,7 @@ type EnqueueRequest struct {
 
 type Controller interface {
 	Act(Config) []EnqueueRequest
-	GetConfig() ConfigProperties
+	GetConfigProperties() ConfigProperties
 	ValidateConfig(Config) error
 	GetName() string
 }

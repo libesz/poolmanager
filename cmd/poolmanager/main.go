@@ -18,7 +18,7 @@ func main() {
 	pumpOrOutputMembers := io.NewOrOutput(&timer, 2)
 	pumpController := controller.NewPoolPumpController(&timer, &pumpOrOutputMembers[0])
 
-	tempControllerConfig := controller.Config{"desired temperature": 28.0, "start hour": 12, "end hour": 16}
+	tempControllerConfig := controller.Config{"enabled": true, "desired temperature": 28.0, "start hour": 12, "end hour": 16}
 	tempSensor := io.DummyTempSensor{Temperature: 26}
 	heaterOutput := &io.DummyOutput{Name: "heater1"}
 	tempController := controller.NewPoolTempController(0.5, &tempSensor, heaterOutput, &pumpOrOutputMembers[1], time.Now)

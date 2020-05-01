@@ -19,7 +19,7 @@ func NewPoolPumpController(timer io.Input, pumpOutput io.Output) PoolPumpControl
 	return PoolPumpController{timer: timer, pumpOutput: pumpOutput}
 }
 
-func (c *PoolPumpController) GetConfig() ConfigProperties {
+func (c *PoolPumpController) GetConfigProperties() ConfigProperties {
 	return ConfigProperties{
 		configKey: ConfigRange{
 			Default: 2,

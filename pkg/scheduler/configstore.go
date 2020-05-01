@@ -52,7 +52,7 @@ func (s *ConfigStore) Run(stopChan chan struct{}) {
 			if !existing {
 				getPropertiesRequest.resultChan <- controller.ConfigProperties{}
 			}
-			getPropertiesRequest.resultChan <- item.controller.GetConfig()
+			getPropertiesRequest.resultChan <- item.controller.GetConfigProperties()
 		case setRequest := <-s.setChan:
 			err := setRequest.controller.ValidateConfig(setRequest.config)
 			if err == nil {

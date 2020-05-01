@@ -35,13 +35,17 @@ type PoolTempController struct {
 }
 
 const (
-	configKeyTemp  = "desired temperature"
-	configKeyStart = "start hour"
-	configKeyEnd   = "end hour"
+	configKeyEnabled = "enabled"
+	configKeyTemp    = "desired temperature"
+	configKeyStart   = "start hour"
+	configKeyEnd     = "end hour"
 )
 
-func (c PoolTempController) GetConfig() ConfigProperties {
+func (c PoolTempController) GetConfigProperties() ConfigProperties {
 	return ConfigProperties{
+		configKeyEnabled: ConfigToggle{
+			Default: false,
+		},
 		configKeyTemp: ConfigRange{
 			Default: 25.0,
 			Min:     20.0,
@@ -64,6 +68,10 @@ func (c PoolTempController) GetConfig() ConfigProperties {
 }
 
 func (c PoolTempController) ValidateConfig(config Config) error {
+	_, ok := config[configKeyEnabled].(bool)
+	if !ok {
+		return fmt.Errorf("Enabled toggle is not a bool")
+	}
 	temp, ok := config[configKeyTemp].(float64)
 	if !ok {
 		return fmt.Errorf("Temperature is not a float")
@@ -111,7 +119,7 @@ func (c *delayedOperation) GetName() string {
 	return "delayedOperation"
 }
 
-func (c delayedOperation) GetConfig() ConfigProperties {
+func (c delayedOperation) GetConfigProperties() ConfigProperties {
 	return ConfigProperties{}
 }
 
