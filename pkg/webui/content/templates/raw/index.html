@@ -28,11 +28,11 @@
               <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
                 <h2 class="mdc-typography--headline6">Controller: {{$controller}}</h2>
                   {{range $index, $item := $config}}
-                  {{if eq $item.DetectedType "range"}}
+                  {{if eq $item.DetectedType "slider"}}
                     <p>{{$item.Key}}:</p>
                     <div class="mdc-slider" tabindex="0" role="slider"
-                      aria-valuemin="{{$item.Range.Min}}" aria-valuemax="{{$item.Range.Max}}" aria-valuenow="{{$item.Value}}"
-                      aria-label="Select Value" data-step="{{$item.Range.Step}}">
+                      aria-valuemin="{{$item.Slider.Min}}" aria-valuemax="{{$item.Slider.Max}}" aria-valuenow="{{$item.Value}}"
+                      aria-label="Select Value" data-step="{{$item.Slider.Step}}" controller="{{$controller}}" key="{{$item.Key}}">
                       <div class="mdc-slider__track-container">
                         <div class="mdc-slider__track"></div>
                       </div>
@@ -81,6 +81,7 @@
     </div>
     <script src="static/bundle.js" async></script>
     <script langauage = "javascript">
+
     </script>
   </body>
 </html>

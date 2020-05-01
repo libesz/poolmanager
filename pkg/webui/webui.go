@@ -1,6 +1,7 @@
 package webui
 
 import (
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
@@ -45,7 +46,7 @@ func Run(configStore *scheduler.ConfigStore) {
 type ConfigItemWithType struct {
 	Key          string
 	DetectedType string
-	Range        controller.ConfigRange
+	Slider       controller.ConfigRange
 	Toggle       controller.ConfigToggle
 	Value        interface{}
 }
@@ -67,8 +68,8 @@ func homeHandler(configStore *scheduler.ConfigStore, w http.ResponseWriter, r *h
 			item := ConfigItemWithType{Key: key, Value: configValuesForController[key]}
 			switch property.(type) {
 			case controller.ConfigRange:
-				item.DetectedType = "range"
-				item.Range = property.(controller.ConfigRange)
+				item.DetectedType = "slider"
+				item.Slider = property.(controller.ConfigRange)
 			case controller.ConfigToggle:
 				item.DetectedType = "toggle"
 				item.Toggle = property.(controller.ConfigToggle)
@@ -83,12 +84,25 @@ func homeHandler(configStore *scheduler.ConfigStore, w http.ResponseWriter, r *h
 	}
 }
 
+type JsonRequest struct {
+	Controller string `json:"controller"`
+	Key        string `json:"key"`
+	Value      string `json:"value"`
+}
+
+type JsonResponse struct {
+	Error string `json:"error"`
+}
+
 func homePostHandler(configStore *scheduler.ConfigStore, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	r.ParseForm()
-	data := PageData{Function: "debug", Debug: r.PostForm.Encode()}
-	log.Printf("%+v\n", data)
-	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
-		log.Println(err.Error())
+	decoder := json.NewDecoder(r.Body)
+	var data JsonRequest
+	err := decoder.Decode(&data)
+	if err != nil {
+		panic(err)
 	}
+	log.Printf("%+v\n", data)
+	u := JsonResponse{Error: "bla"}
+	json.NewEncoder(w).Encode(u)
 }
