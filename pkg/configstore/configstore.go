@@ -1,8 +1,8 @@
-package scheduler
+package configstore
 
 import "github.com/libesz/poolmanager/pkg/controller"
 
-func NewConfigStore() ConfigStore {
+func New() ConfigStore {
 	return ConfigStore{
 		setChan:           make(chan configStoreSetArgs),
 		getChan:           make(chan configStoreGetArgs),

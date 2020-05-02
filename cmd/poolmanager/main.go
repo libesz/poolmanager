@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/cloudflare/cfssl/log"
+	"github.com/libesz/poolmanager/pkg/configstore"
 	"github.com/libesz/poolmanager/pkg/controller"
 	"github.com/libesz/poolmanager/pkg/io"
 	"github.com/libesz/poolmanager/pkg/scheduler"
@@ -26,7 +27,7 @@ func main() {
 	stopChan := make(chan struct{})
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	c := scheduler.NewConfigStore()
+	c := configstore.New()
 	go func() {
 		c.Run(stopChan)
 		wg.Done()

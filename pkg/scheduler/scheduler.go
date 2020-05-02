@@ -4,10 +4,11 @@ import (
 	"log"
 	"time"
 
+	"github.com/libesz/poolmanager/pkg/configstore"
 	"github.com/libesz/poolmanager/pkg/controller"
 )
 
-func New(configStore *ConfigStore) Scheduler {
+func New(configStore *configstore.ConfigStore) Scheduler {
 	return Scheduler{taskChan: make(chan controller.Controller), configStore: configStore}
 }
 

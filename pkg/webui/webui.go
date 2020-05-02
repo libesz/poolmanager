@@ -9,8 +9,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+	"github.com/libesz/poolmanager/pkg/configstore"
 	"github.com/libesz/poolmanager/pkg/controller"
-	"github.com/libesz/poolmanager/pkg/scheduler"
 	"github.com/libesz/poolmanager/pkg/webui/content/static"
 	"github.com/libesz/poolmanager/pkg/webui/content/templates"
 	"github.com/shurcooL/httpfs/html/vfstemplate"
@@ -19,7 +19,7 @@ import (
 var parsedTemplates *template.Template
 var store = sessions.NewCookieStore([]byte("temp"))
 
-func Run(configStore *scheduler.ConfigStore) {
+func Run(configStore *configstore.ConfigStore) {
 	r := mux.NewRouter()
 	parsedTemplates = template.Must(vfstemplate.ParseGlob(templates.Content, nil, "*.html"))
 
@@ -57,7 +57,7 @@ type PageData struct {
 	Debug     string
 }
 
-func homeHandler(configStore *scheduler.ConfigStore, w http.ResponseWriter, r *http.Request) {
+func homeHandler(configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	allConfig := make(map[string][]ConfigItemWithType)
 	controllers := configStore.GetKeys()
@@ -94,15 +94,18 @@ type JsonResponse struct {
 	Error string `json:"error"`
 }
 
-func homePostHandler(configStore *scheduler.ConfigStore, w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var data JsonRequest
 	err := decoder.Decode(&data)
 	if err != nil {
-		panic(err)
+		log.Printf("Decode error on request: %s\n", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	log.Printf("%+v\n", data)
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
 	u := JsonResponse{Error: "bla"}
 	json.NewEncoder(w).Encode(u)
 }
