@@ -46,7 +46,7 @@ func (c *PoolPumpController) Act(config Config) []EnqueueRequest {
 	if c.pumpOutput.Set(task) {
 		log.Printf("PoolPumpController: changed pump state to: %t", task)
 	}
-	return []EnqueueRequest{{Controller: c, After: 5 * time.Second}}
+	return []EnqueueRequest{{Controller: c, Config: config, After: 5 * time.Second}}
 }
 
 func (c *PoolPumpController) GetName() string {

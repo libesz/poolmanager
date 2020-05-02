@@ -3,14 +3,14 @@ package configstore
 import "github.com/libesz/poolmanager/pkg/controller"
 
 type configSetItem struct {
-	controller controller.Controller
+	controller string
 	config     controller.Config
 }
 
 type configSet map[string]*configSetItem
 
 type configStoreSetArgs struct {
-	controller controller.Controller
+	controller string
 	config     controller.Config
 	resultChan chan error
 }
@@ -25,9 +25,15 @@ type configStoreGetArgs struct {
 	resultChan chan controller.Config
 }
 
+type ConfigStoreHook interface {
+	ConfigUpdated(controller string, config controller.Config) error
+	GetConfigProperties(controller string) controller.ConfigProperties
+}
+
 type ConfigStore struct {
 	setChan           chan configStoreSetArgs
 	getChan           chan configStoreGetArgs
 	getKeysChan       chan chan []string
 	getPropertiesChan chan configStoreGetPropertiesArgs
+	hook              ConfigStoreHook
 }

@@ -19,6 +19,7 @@ type Config map[string]interface{}
 
 type EnqueueRequest struct {
 	Controller Controller
+	Config     Config
 	After      time.Duration
 }
 

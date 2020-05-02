@@ -2,16 +2,17 @@ package configstore
 
 import "github.com/libesz/poolmanager/pkg/controller"
 
-func New() ConfigStore {
+func New(hook ConfigStoreHook) ConfigStore {
 	return ConfigStore{
 		setChan:           make(chan configStoreSetArgs),
 		getChan:           make(chan configStoreGetArgs),
 		getKeysChan:       make(chan chan []string),
 		getPropertiesChan: make(chan configStoreGetPropertiesArgs),
+		hook:              hook,
 	}
 }
 
-func (s *ConfigStore) Set(controller controller.Controller, config controller.Config) error {
+func (s *ConfigStore) Set(controller string, config controller.Config) error {
 	resultChan := make(chan error)
 	s.setChan <- configStoreSetArgs{controller: controller, config: config, resultChan: resultChan}
 	return <-resultChan
@@ -48,17 +49,13 @@ func (s *ConfigStore) Run(stopChan chan struct{}) {
 			}
 			getRequest.resultChan <- item.config
 		case getPropertiesRequest := <-s.getPropertiesChan:
-			item, existing := all[getPropertiesRequest.name]
-			if !existing {
-				getPropertiesRequest.resultChan <- controller.ConfigProperties{}
-			}
-			getPropertiesRequest.resultChan <- item.controller.GetConfigProperties()
+			getPropertiesRequest.resultChan <- s.hook.GetConfigProperties(getPropertiesRequest.name)
 		case setRequest := <-s.setChan:
-			err := setRequest.controller.ValidateConfig(setRequest.config)
+			err := s.hook.ConfigUpdated(setRequest.controller, setRequest.config)
 			if err == nil {
 				item := configSetItem{controller: setRequest.controller, config: setRequest.config}
 				item.config = setRequest.config
-				all[setRequest.controller.GetName()] = &item
+				all[setRequest.controller] = &item
 			}
 			setRequest.resultChan <- err
 		case getKeysResponseChan := <-s.getKeysChan:

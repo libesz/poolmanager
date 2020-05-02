@@ -4,7 +4,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cloudflare/cfssl/log"
 	"github.com/libesz/poolmanager/pkg/configstore"
 	"github.com/libesz/poolmanager/pkg/controller"
 	"github.com/libesz/poolmanager/pkg/io"
@@ -26,25 +25,27 @@ func main() {
 
 	stopChan := make(chan struct{})
 	wg := sync.WaitGroup{}
-	wg.Add(1)
-	c := configstore.New()
-	go func() {
-		c.Run(stopChan)
-		wg.Done()
-	}()
 
-	s := scheduler.New(&c)
+	s := scheduler.New()
 	wg.Add(1)
 	go func() {
 		s.Run(stopChan)
 		wg.Done()
 	}()
-	if err := s.AddController(&tempController, tempControllerConfig); err != nil {
-		log.Fatalf("Failed to add tempController: %s\n", err.Error())
-	}
-	if err := s.AddController(&pumpController, pumpControllerConfig); err != nil {
-		log.Fatalf("Failed to add pumpController: %s\n", err.Error())
-	}
+
+	wg.Add(1)
+	c := configstore.New(&s)
+	go func() {
+		c.Run(stopChan)
+		wg.Done()
+	}()
+
+	s.AddController(&tempController)
+	s.AddController(&pumpController)
+
+	c.Set(tempController.GetName(), tempControllerConfig)
+	c.Set(pumpController.GetName(), pumpControllerConfig)
+
 	webui.Run(&c)
 	wg.Wait()
 }
