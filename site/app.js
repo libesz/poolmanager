@@ -1,9 +1,15 @@
 import {MDCTopAppBar} from '@material/top-app-bar';
 import {MDCSlider} from '@material/slider';
+import {MDCSnackbar} from '@material/snackbar';
+import {MDCIconButtonToggle} from '@material/icon-button';
+import {MDCRipple} from '@material/ripple';
+
 
 // Instantiation
 const topAppBarElement = document.querySelector('.mdc-top-app-bar');
 const topAppBar = new MDCTopAppBar(topAppBarElement);
+const snackbar = new MDCSnackbar(document.querySelector('.mdc-snackbar'));
+const iconButtonRipple = new MDCRipple(document.querySelector('.mdc-button'));
 
 const sliders = document.querySelectorAll('.mdc-slider')
 sliders.forEach(slider => {
@@ -27,7 +33,9 @@ function updateConfigItem(controller, key, value, cbOnError) {
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status !== 200) {
             var json = JSON.parse(xhr.responseText);
-            console.log("Error: " + json.error);
+            //console.log("Error: " + json.error);
+            snackbar.labelText = "Error: " + json.error;
+            snackbar.open()
             cbOnError(json.origValue)
         }
     };

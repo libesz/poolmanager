@@ -66,16 +66,25 @@
                   {{end}}
               </div>
               {{end}}
-              <div class="mdl-card__actions">
-                <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
-                  Submit
-                </button>
-              </div>
               {{else}}
               {{.Debug}}
               {{end}}    
             </div>
           </form>
+        </div>
+      </div>
+      <div class="mdc-snackbar">
+        <div class="mdc-snackbar__surface">
+          <div class="mdc-snackbar__label"
+               role="status"
+               aria-live="polite">
+          </div>
+          <div class="mdc-snackbar__actions">
+            <button type="button" class="mdc-button mdc-snackbar__action">
+              <div class="mdc-button__ripple"></div>
+              <span class="mdc-button__label">Dismiss</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
