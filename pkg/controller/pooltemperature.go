@@ -82,14 +82,14 @@ func (c PoolTempController) ValidateConfig(config Config) error {
 	if int(temp*10)%5 != 0 {
 		return fmt.Errorf("Temperature is not a valid step (.0 or .5 required)")
 	}
-	start, ok := config[configKeyStart].(int)
+	start, ok := config[configKeyStart].(float64)
 	if !ok {
 		return fmt.Errorf("Start time it not an int")
 	}
 	if start < 0 || start > 23 {
 		return fmt.Errorf("Start time is outside of the allowed range")
 	}
-	end, ok := config[configKeyEnd].(int)
+	end, ok := config[configKeyEnd].(float64)
 	if !ok {
 		return fmt.Errorf("Start time it not an int")
 	}
@@ -141,8 +141,8 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 	desiredTemp := config[configKeyTemp].(float64)
 	currentTemp := c.tempSensor.Value()
 	now := c.now()
-	nextStart := time.Date(now.Year(), now.Month(), now.Day(), config[configKeyStart].(int), 0, 0, 0, now.Local().Location())
-	nextStop := time.Date(now.Year(), now.Month(), now.Day(), config[configKeyEnd].(int), 0, 0, 0, now.Local().Location())
+	nextStart := time.Date(now.Year(), now.Month(), now.Day(), int(config[configKeyStart].(float64)), 0, 0, 0, now.Local().Location())
+	nextStop := time.Date(now.Year(), now.Month(), now.Day(), int(config[configKeyEnd].(float64)), 0, 0, 0, now.Local().Location())
 
 	var thisManyHoursUntilNextStart float64
 	if now.After(nextStart) {
@@ -162,7 +162,7 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 			return []EnqueueRequest{{Controller: c, Config: config, After: 5 * time.Second}, {Controller: &pending, After: 6 * time.Second}}
 		}
 		c.heaterOutput.Set(true)
-		return []EnqueueRequest{{Controller: c, After: 5 * time.Second}}
+		return []EnqueueRequest{{Controller: c, Config: config, After: 5 * time.Second}}
 	}
 	log.Printf("The temperature is already fine\n")
 	if c.heaterOutput.Set(false) {

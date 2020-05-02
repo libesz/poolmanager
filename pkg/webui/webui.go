@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -91,7 +92,8 @@ type JsonRequest struct {
 }
 
 type JsonResponse struct {
-	Error string `json:"error"`
+	Error     string      `json:"error"`
+	OrigValue interface{} `json:"origValue"`
 }
 
 func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
@@ -99,13 +101,51 @@ func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter
 	var data JsonRequest
 	err := decoder.Decode(&data)
 	if err != nil {
-		log.Printf("Decode error on request: %s\n", err.Error())
+		log.Printf("Webui: ecode error on request: %s\n", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	log.Printf("%+v\n", data)
-	w.WriteHeader(http.StatusOK)
+	log.Printf("Webui: requested config change: %+v\n", data)
+
 	w.Header().Set("Content-Type", "application/json")
-	u := JsonResponse{Error: "bla"}
+
+	config := configStore.Get(data.Controller)
+	origValue := config[data.Key]
+	switch config[data.Key].(type) {
+	case float64:
+		log.Printf("Webui: identified numeric config\n")
+		convertedValue, err := strconv.ParseFloat(data.Value, 64)
+		if err != nil {
+			log.Printf("Webui: Failed to parse requested numeric config change for controller %s key %s value %s: %s\n", data.Controller, data.Key, data.Value, err.Error())
+			respondError(w, origValue, err)
+			return
+		}
+		config[data.Key] = convertedValue
+	case bool:
+		log.Printf("Webui: identified boolean config\n")
+		convertedValue, err := strconv.ParseBool(data.Value)
+		if err != nil {
+			log.Printf("Webui: Failed to parse requested boolean config change for controller %s key %s value %s: %s\n", data.Controller, data.Key, data.Value, err.Error())
+			respondError(w, origValue, err)
+			return
+		}
+		config[data.Key] = convertedValue
+	default:
+		log.Printf("Webui: unknown type: %T\n", config[data.Key])
+	}
+	err = configStore.Set(data.Controller, config)
+	if err != nil {
+		log.Printf("Webui: Failed to update config for controller %s: %s\n", data.Controller, err.Error())
+		respondError(w, origValue, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	u := JsonResponse{Error: "OK"}
+	json.NewEncoder(w).Encode(u)
+}
+
+func respondError(w http.ResponseWriter, origValue interface{}, err error) {
+	w.WriteHeader(http.StatusInternalServerError)
+	u := JsonResponse{Error: err.Error(), OrigValue: origValue}
 	json.NewEncoder(w).Encode(u)
 }

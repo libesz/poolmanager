@@ -44,10 +44,14 @@ func (s *ConfigStore) Run(stopChan chan struct{}) {
 			return
 		case getRequest := <-s.getChan:
 			item, existing := all[getRequest.name]
+			result := make(controller.Config)
 			if !existing {
-				item = &configSetItem{}
+				getRequest.resultChan <- result
 			}
-			getRequest.resultChan <- item.config
+			for key, value := range item.config {
+				result[key] = value
+			}
+			getRequest.resultChan <- result
 		case getPropertiesRequest := <-s.getPropertiesChan:
 			getPropertiesRequest.resultChan <- s.hook.GetConfigProperties(getPropertiesRequest.name)
 		case setRequest := <-s.setChan:
