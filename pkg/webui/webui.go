@@ -44,41 +44,24 @@ func Run(configStore *configstore.ConfigStore) {
 	log.Fatal(srv.ListenAndServe())
 }
 
-type ConfigItemWithType struct {
-	Key          string
-	DetectedType string
-	Slider       controller.ConfigRange
-	Toggle       controller.ConfigToggle
-	Value        interface{}
-}
-
 type PageData struct {
-	AllConfig map[string][]ConfigItemWithType
-	Function  string
-	Debug     string
+	ConfigProperties map[string]controller.ConfigProperties
+	ConfigValues     map[string]controller.Config
+	Function         string
+	Debug            string
 }
 
 func homeHandler(configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	allConfig := make(map[string][]ConfigItemWithType)
+	data := PageData{
+		ConfigProperties: make(map[string]controller.ConfigProperties),
+		ConfigValues:     make(map[string]controller.Config),
+		Function:         "default"}
 	controllers := configStore.GetKeys()
 	for _, controllerName := range controllers {
-		configPropertiesForController := configStore.GetProperties(controllerName)
-		configValuesForController := configStore.Get(controllerName)
-		for key, property := range configPropertiesForController {
-			item := ConfigItemWithType{Key: key, Value: configValuesForController[key]}
-			switch property.(type) {
-			case controller.ConfigRange:
-				item.DetectedType = "slider"
-				item.Slider = property.(controller.ConfigRange)
-			case controller.ConfigToggle:
-				item.DetectedType = "toggle"
-				item.Toggle = property.(controller.ConfigToggle)
-			}
-			allConfig[controllerName] = append(allConfig[controllerName], item)
-		}
+		data.ConfigProperties[controllerName] = configStore.GetProperties(controllerName)
+		data.ConfigValues[controllerName] = configStore.Get(controllerName)
 	}
-	data := PageData{AllConfig: allConfig, Function: "default"}
 	log.Printf("%+v\n", data)
 	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
 		log.Println(err.Error())
@@ -87,6 +70,7 @@ func homeHandler(configStore *configstore.ConfigStore, w http.ResponseWriter, r 
 
 type JsonRequest struct {
 	Controller string `json:"controller"`
+	Type       string `json:"type"`
 	Key        string `json:"key"`
 	Value      string `json:"value"`
 }
@@ -110,9 +94,9 @@ func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter
 	w.Header().Set("Content-Type", "application/json")
 
 	config := configStore.Get(data.Controller)
-	origValue := config[data.Key]
-	switch config[data.Key].(type) {
-	case float64:
+	origValue := ""
+	switch data.Type {
+	case "range":
 		log.Printf("Webui: identified numeric config\n")
 		convertedValue, err := strconv.ParseFloat(data.Value, 64)
 		if err != nil {
@@ -120,8 +104,9 @@ func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter
 			respondError(w, origValue, err)
 			return
 		}
-		config[data.Key] = convertedValue
-	case bool:
+		origValue = strconv.FormatFloat(config.Ranges[data.Key], 'E', -1, 64)
+		config.Ranges[data.Key] = convertedValue
+	case "toggle":
 		log.Printf("Webui: identified boolean config\n")
 		convertedValue, err := strconv.ParseBool(data.Value)
 		if err != nil {
@@ -129,9 +114,10 @@ func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter
 			respondError(w, origValue, err)
 			return
 		}
-		config[data.Key] = convertedValue
+		origValue = strconv.FormatBool(config.Toggles[data.Key])
+		config.Toggles[data.Key] = convertedValue
 	default:
-		log.Printf("Webui: unknown type: %T\n", config[data.Key])
+		log.Printf("Webui: unknown type: %s\n", data.Type)
 	}
 	err = configStore.Set(data.Controller, config)
 	if err != nil {

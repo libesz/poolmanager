@@ -21,17 +21,19 @@ func NewPoolPumpController(timer io.Input, pumpOutput io.Output) PoolPumpControl
 
 func (c *PoolPumpController) GetConfigProperties() ConfigProperties {
 	return ConfigProperties{
-		configKey: ConfigRange{
-			Default: 2,
-			Min:     0,
-			Max:     8,
-			Step:    1,
+		Ranges: map[string]ConfigRangeProperties{
+			configKey: {
+				Default: 2,
+				Min:     0,
+				Max:     8,
+				Step:    1,
+			},
 		},
 	}
 }
 
 func (c *PoolPumpController) ValidateConfig(config Config) error {
-	time, ok := config[configKey].(float64)
+	time, ok := config.Ranges[configKey]
 	if !ok {
 		return fmt.Errorf("Configured type is not int")
 	}
@@ -42,7 +44,7 @@ func (c *PoolPumpController) ValidateConfig(config Config) error {
 }
 
 func (c *PoolPumpController) Act(config Config) []EnqueueRequest {
-	task := config[configKey].(float64) > (c.timer.Value())
+	task := config.Ranges[configKey] > (c.timer.Value())
 	if c.pumpOutput.Set(task) {
 		log.Printf("PoolPumpController: changed pump state to: %t", task)
 	}

@@ -13,13 +13,22 @@ import (
 )
 
 func main() {
-	pumpControllerConfig := controller.Config{"desired runtime per day": 1.0}
+	pumpControllerConfig := controller.Config{Ranges: map[string]float64{"desired runtime per day": 1.0}}
 	pumpOutput := io.DummyOutput{Name: "pumpOutput"}
 	timer := io.NewTimerOutput("pumpTimerOutput", &pumpOutput, time.Now)
 	pumpOrOutputMembers := io.NewOrOutput(&timer, 2)
 	pumpController := controller.NewPoolPumpController(&timer, &pumpOrOutputMembers[0])
 
-	tempControllerConfig := controller.Config{"enabled": true, "desired temperature": 28.0, "start hour": 12.0, "end hour": 16.0}
+	tempControllerConfig := controller.Config{
+		Toggles: map[string]bool{
+			"enabled": true,
+		},
+		Ranges: map[string]float64{
+			"desired temperature": 28.0,
+			"start hour":          12.0,
+			"end hour":            16.0,
+		},
+	}
 	tempSensor := io.DummyTempSensor{Temperature: 26}
 	heaterOutput := &io.DummyOutput{Name: "heater1"}
 	tempController := controller.NewPoolTempController(0.5, &tempSensor, heaterOutput, &pumpOrOutputMembers[1], time.Now)

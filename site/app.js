@@ -16,7 +16,7 @@ sliders.forEach(slider => {
     const mDCSlider = new MDCSlider(slider)
     mDCSlider.listen('MDCSlider:change', () => {
         console.log(`Value of ${slider.attributes['controller'].value} key ${slider.attributes['key'].value} changed to ${mDCSlider.value}`)
-        updateConfigItem(slider.attributes['controller'].value, slider.attributes['key'].value, mDCSlider.value, function(resetValue){mDCSlider.value = resetValue})
+        updateConfigItem(slider.attributes['controller'].value, "range", slider.attributes['key'].value, mDCSlider.value, function(resetValue){mDCSlider.value = resetValue})
     });
 
     //This is to correctly render sliders. Ref: https://github.com/material-components/material-components-web/issues/1017
@@ -25,7 +25,7 @@ sliders.forEach(slider => {
     }, false);
 });
 
-function updateConfigItem(controller, key, value, cbOnError) {
+function updateConfigItem(controller, type, key, value, cbOnError) {
     var xhr = new XMLHttpRequest();
     var url = window.location.href;
     xhr.open("POST", url, true);
@@ -39,6 +39,6 @@ function updateConfigItem(controller, key, value, cbOnError) {
             cbOnError(json.origValue)
         }
     };
-    var data = JSON.stringify({"controller": controller, "key": key, "value": value.toString()});
+    var data = JSON.stringify({"controller": controller, "type": type, "key": key, "value": value.toString()});
     xhr.send(data);
 }

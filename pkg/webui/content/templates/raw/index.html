@@ -24,15 +24,15 @@
           <div class="mdc-layout-grid__inner">
             
             {{if eq .Function "default"}}
-              {{range $controller, $config := .AllConfig}}
+              {{ $ConfigValues := .ConfigValues }}
+              {{range $controller, $configProperty := .ConfigProperties}}
               <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
                 <h2 class="mdc-typography--headline6">Controller: {{$controller}}</h2>
-                  {{range $index, $item := $config}}
-                  {{if eq $item.DetectedType "slider"}}
-                    <p>{{$item.Key}}:</p>
+                  {{range $key, $item := $configProperty.Ranges}}
+                    <p>{{$key}}:</p>
                     <div class="mdc-slider" tabindex="0" role="slider"
-                      aria-valuemin="{{$item.Slider.Min}}" aria-valuemax="{{$item.Slider.Max}}" aria-valuenow="{{$item.Value}}"
-                      aria-label="Select Value" data-step="{{$item.Slider.Step}}" controller="{{$controller}}" key="{{$item.Key}}">
+                      aria-valuemin="{{$item.Min}}" aria-valuemax="{{$item.Max}}" aria-valuenow="{{ with (index $ConfigValues $controller) }}{{ with (index .Ranges $key) }}{{.}}{{ end }}{{ end }}"
+                      aria-label="Select Value" data-step="{{$item.Step}}" controller="{{$controller}}" key="{{$key}}">
                       <div class="mdc-slider__track-container">
                         <div class="mdc-slider__track"></div>
                       </div>
@@ -43,26 +43,16 @@
                         <div class="mdc-slider__focus-ring"></div>
                       </div>
                     </div>
-                    {{else if eq $item.DetectedType "toggle"}}
-                    <div class="mdc-form-field">
-                      <div class="mdc-checkbox">
-                        <input type="checkbox"
-                               class="mdc-checkbox__native-control"
-                               id="checkbox-1"/>
-                        <div class="mdc-checkbox__background">
-                          <svg class="mdc-checkbox__checkmark"
-                               viewBox="0 0 24 24">
-                            <path class="mdc-checkbox__checkmark-path"
-                                  fill="none"
-                                  d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
-                          </svg>
-                          <div class="mdc-checkbox__mixedmark"></div>
-                        </div>
-                        <div class="mdc-checkbox__ripple"></div>
+                  {{end}}
+                  {{range $key, $item := $configProperty.Toggles}}
+                    <div class="mdc-switch">
+                      <div class="mdc-switch__track"></div>
+                      <div class="mdc-switch__thumb-underlay">
+                        <div class="mdc-switch__thumb"></div>
+                        <input type="checkbox" id="{{$controller}}-{{$key}}" class="mdc-switch__native-control" role="switch" aria-checked="{{ with (index $ConfigValues $controller) }}{{ with (index .Toggles $key) }}{{.}}{{ end }}{{ end }}">
                       </div>
-                      <label for="checkbox-1">{{$item.Key}}</label>
                     </div>
-                    {{end}}
+                    <label for="{{$controller}}-{{$key}}">{{$key}}</label>
                   {{end}}
               </div>
               {{end}}

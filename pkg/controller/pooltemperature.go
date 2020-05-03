@@ -43,38 +43,42 @@ const (
 
 func (c PoolTempController) GetConfigProperties() ConfigProperties {
 	return ConfigProperties{
-		configKeyEnabled: ConfigToggle{
-			Default: false,
+		Toggles: map[string]ConfigToggleProperties{
+			configKeyEnabled: {
+				Default: false,
+			},
 		},
-		configKeyTemp: ConfigRange{
-			Default: 25.0,
-			Min:     20.0,
-			Max:     30.0,
-			Step:    0.5,
-		},
-		configKeyStart: ConfigRange{
-			Default: 13,
-			Min:     0,
-			Max:     23,
-			Step:    1,
-		},
-		configKeyEnd: ConfigRange{
-			Default: 16,
-			Min:     0,
-			Max:     23,
-			Step:    1,
+		Ranges: map[string]ConfigRangeProperties{
+			configKeyTemp: {
+				Default: 25.0,
+				Min:     20.0,
+				Max:     30.0,
+				Step:    0.5,
+			},
+			configKeyStart: {
+				Default: 13,
+				Min:     0,
+				Max:     23,
+				Step:    1,
+			},
+			configKeyEnd: {
+				Default: 16,
+				Min:     0,
+				Max:     23,
+				Step:    1,
+			},
 		},
 	}
 }
 
 func (c PoolTempController) ValidateConfig(config Config) error {
-	_, ok := config[configKeyEnabled].(bool)
+	_, ok := config.Toggles[configKeyEnabled]
 	if !ok {
-		return fmt.Errorf("Enabled toggle is not a bool")
+		return fmt.Errorf("Enabled toggle not found in config")
 	}
-	temp, ok := config[configKeyTemp].(float64)
+	temp, ok := config.Ranges[configKeyTemp]
 	if !ok {
-		return fmt.Errorf("Temperature is not a float")
+		return fmt.Errorf("Temperature is not found in config")
 	}
 	if temp < 20.0 || temp > 30.0 {
 		return fmt.Errorf("Temperature is outside of the allowed range")
@@ -82,16 +86,16 @@ func (c PoolTempController) ValidateConfig(config Config) error {
 	if int(temp*10)%5 != 0 {
 		return fmt.Errorf("Temperature is not a valid step (.0 or .5 required)")
 	}
-	start, ok := config[configKeyStart].(float64)
+	start, ok := config.Ranges[configKeyStart]
 	if !ok {
-		return fmt.Errorf("Start time it not an int")
+		return fmt.Errorf("Start time it not found in config")
 	}
 	if start < 0 || start > 23 {
 		return fmt.Errorf("Start time is outside of the allowed range")
 	}
-	end, ok := config[configKeyEnd].(float64)
+	end, ok := config.Ranges[configKeyEnd]
 	if !ok {
-		return fmt.Errorf("Start time it not an int")
+		return fmt.Errorf("Start time it not found in config")
 	}
 	if end < 0 || end > 23 {
 		return fmt.Errorf("Start time is outside of the allowed range")
@@ -138,11 +142,11 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 			return []EnqueueRequest{{Controller: c, Config: config, After: 5 * time.Second}}
 		}
 	}
-	desiredTemp := config[configKeyTemp].(float64)
+	desiredTemp := config.Ranges[configKeyTemp]
 	currentTemp := c.tempSensor.Value()
 	now := c.now()
-	nextStart := time.Date(now.Year(), now.Month(), now.Day(), int(config[configKeyStart].(float64)), 0, 0, 0, now.Local().Location())
-	nextStop := time.Date(now.Year(), now.Month(), now.Day(), int(config[configKeyEnd].(float64)), 0, 0, 0, now.Local().Location())
+	nextStart := time.Date(now.Year(), now.Month(), now.Day(), int(config.Ranges[configKeyStart]), 0, 0, 0, now.Local().Location())
+	nextStop := time.Date(now.Year(), now.Month(), now.Day(), int(config.Ranges[configKeyEnd]), 0, 0, 0, now.Local().Location())
 
 	var thisManyHoursUntilNextStart float64
 	if now.After(nextStart) {

@@ -22,30 +22,30 @@ func (s *Scheduler) AddController(c controller.Controller) {
 	s.controllers[c.GetName()] = c
 }
 
-func (s *Scheduler) GetConfigProperties(controller string) controller.ConfigProperties {
-	c, ok := s.controllers[controller]
+func (s *Scheduler) GetConfigProperties(controllerName string) controller.ConfigProperties {
+	c, ok := s.controllers[controllerName]
 	if !ok {
-		return nil
+		return controller.EmptyProperties()
 	}
 	return c.GetConfigProperties()
 }
 
-func (s *Scheduler) ConfigUpdated(controller string, config controller.Config) error {
-	c, ok := s.controllers[controller]
+func (s *Scheduler) ConfigUpdated(controllerName string, config controller.Config) error {
+	c, ok := s.controllers[controllerName]
 	if !ok {
-		return fmt.Errorf("Controller not found: %s", controller)
+		return fmt.Errorf("Controller not found: %s", controllerName)
 	}
 	if err := c.ValidateConfig(config); err != nil {
 		return err
 	}
-	log.Printf("Scheduler: scheduling controller: %s\n", controller)
-	s.cancel(controller)
+	log.Printf("Scheduler: scheduling controller: %s\n", controllerName)
+	s.cancel(controllerName)
 	s.enqueue(schedulerTask{controller: c, config: config})
 	return nil
 }
 
-func (s *Scheduler) cancel(controller string) {
-	task := cancelTask{controller: controller, result: make(chan struct{})}
+func (s *Scheduler) cancel(controllerName string) {
+	task := cancelTask{controller: controllerName, result: make(chan struct{})}
 	s.cancelChan <- task
 	<-task.result
 }
