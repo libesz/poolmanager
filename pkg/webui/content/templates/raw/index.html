@@ -40,19 +40,29 @@
                   {{end}}
                   {{range $key, $item := $configProperty.Ranges}}
                     <p class="slider-label">{{$key}}:</p>
-                    <div class="mdc-slider" tabindex="0" role="slider"
-                      aria-valuemin="{{$item.Min}}" aria-valuemax="{{$item.Max}}" aria-valuenow="{{ with (index $ConfigValues $controller) }}{{ with (index .Ranges $key) }}{{.}}{{ end }}{{ end }}"
-                      aria-label="Select Value" data-step="{{$item.Step}}" controller="{{$controller}}" key="{{$key}}">
-                      <div class="mdc-slider__track-container">
-                        <div class="mdc-slider__track"></div>
+                    <div class="slider-value-wrapper">
+                      <div class="slider-value-div-min">
+                        <p class="slider-value-min">{{$item.Min}}</p>
                       </div>
-                      <div class="mdc-slider__thumb-container">
-                        <svg class="mdc-slider__thumb" width="21" height="21">
-                          <circle cx="10.5" cy="10.5" r="7.875"></circle>
-                        </svg>
-                        <div class="mdc-slider__focus-ring"></div>
+                      <div class="slider-value-div">
+                      <div class="mdc-slider" tabindex="0" role="slider"
+                        aria-valuemin="{{$item.Min}}" aria-valuemax="{{$item.Max}}" aria-valuenow="{{ with (index $ConfigValues $controller) }}{{ with (index .Ranges $key) }}{{.}}{{ end }}{{ end }}"
+                        aria-label="Select Value" data-step="{{$item.Step}}" controller="{{$controller}}" key="{{$key}}">
+                        <div class="mdc-slider__track-container">
+                          <div class="mdc-slider__track"></div>
+                        </div>
+                        <div class="mdc-slider__thumb-container">
+                          <svg class="mdc-slider__thumb" width="21" height="21">
+                            <circle cx="10.5" cy="10.5" r="7.875"></circle>
+                          </svg>
+                          <div class="mdc-slider__focus-ring"></div>
+                        </div>
+                          <p class="slider-value"></p>
+                        </div>
                       </div>
-                      <div class="slider-value"></div>
+                      <div class="slider-value-div-max">
+                        <p class="slider-value-max">{{$item.Max}}</p>
+                      </div>
                     </div>
                   {{end}}
               </div>
