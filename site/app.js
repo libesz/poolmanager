@@ -28,8 +28,12 @@ sliders.forEach(slider => {
     const mDCSlider = new MDCSlider(slider)
     mDCSlider.listen('MDCSlider:change', () => {
         //console.log(`Value of ${slider.attributes['controller'].value} key ${slider.attributes['key'].value} changed to ${mDCSlider.value}`)
-        updateConfigItem(slider.attributes['controller'].value, "range", slider.attributes['key'].value, mDCSlider.value, function(resetValue){mDCSlider.value = resetValue})
+        updateConfigItem(slider.attributes['controller'].value, "range", slider.attributes['key'].value, mDCSlider.value, function(resetValue){mDCSlider.value = resetValue; slider.querySelector('.slider-value').textContent = mDCSlider.value})
     });
+    mDCSlider.listen('MDCSlider:input', () => {
+        slider.querySelector('.slider-value').textContent = mDCSlider.value
+    });
+    slider.querySelector('.slider-value').textContent = mDCSlider.value
 
     //This is to correctly render sliders. Ref: https://github.com/material-components/material-components-web/issues/1017
     window.addEventListener('load', () => {
