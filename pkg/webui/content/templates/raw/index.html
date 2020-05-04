@@ -20,14 +20,12 @@
       </header>
       <div id="content" class="mdc-top-app-bar--dense-fixed-adjust">
         <div class="mdc-layout-grid">
-          <form method="POST">
           <div class="mdc-layout-grid__inner">
-            
             {{if eq .Function "default"}}
               {{ $ConfigValues := .ConfigValues }}
               {{range $controller, $configProperty := .ConfigProperties}}
               <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
-                <h2 class="mdc-typography--headline6">Controller: {{$controller}}</h2>
+                <h2 class="mdc-typography--headline6">{{$controller}}</h2>
                   {{range $key, $item := $configProperty.Toggles}}
                     <div class="mdc-switch" controller="{{$controller}}" key="{{$key}}">
                       <div class="mdc-switch__track"></div>
@@ -69,9 +67,8 @@
               {{end}}
               {{else}}
               {{.Debug}}
-              {{end}}    
-            </div>
-          </form>
+            {{end}}    
+          </div>
         </div>
       </div>
       <div class="mdc-snackbar">
