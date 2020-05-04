@@ -34,7 +34,7 @@
                         <input type="checkbox" id="{{$controller}}-{{$key}}" class="mdc-switch__native-control" role="switch" aria-checked="{{ with (index $ConfigValues $controller) }}{{ with (index .Toggles $key) }}{{.}}{{ end }}{{ end }}">
                       </div>
                     </div>
-                    <label for="{{$controller}}-{{$key}}">{{$key}}</label>
+                    <label class="switch-label" for="{{$controller}}-{{$key}}">{{$key}}</label>
                   {{end}}
                   {{range $key, $item := $configProperty.Ranges}}
                     <p class="slider-label">{{$key}}:</p>
