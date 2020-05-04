@@ -3,14 +3,12 @@ package controller
 import "time"
 
 type ConfigRangeProperties struct {
-	Min     float64
-	Max     float64
-	Step    float64
-	Default float64
+	Min  float64
+	Max  float64
+	Step float64
 }
 
 type ConfigToggleProperties struct {
-	Default bool
 }
 
 type ConfigProperties struct {
@@ -46,6 +44,7 @@ type EnqueueRequest struct {
 type Controller interface {
 	Act(Config) []EnqueueRequest
 	GetConfigProperties() ConfigProperties
+	GetDefaultConfig() Config
 	ValidateConfig(Config) error
 	GetName() string
 }

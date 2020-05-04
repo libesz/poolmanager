@@ -35,38 +35,46 @@ type PoolTempController struct {
 }
 
 const (
-	configKeyEnabled = "enabled"
-	configKeyTemp    = "desired temperature"
-	configKeyStart   = "start hour"
-	configKeyEnd     = "end hour"
+	configKeyEnabled = "Enabled"
+	configKeyTemp    = "Desired temperature"
+	configKeyStart   = "Start hour"
+	configKeyEnd     = "End hour"
 )
 
 func (c PoolTempController) GetConfigProperties() ConfigProperties {
 	return ConfigProperties{
 		Toggles: map[string]ConfigToggleProperties{
-			configKeyEnabled: {
-				Default: false,
-			},
+			configKeyEnabled: {},
 		},
 		Ranges: map[string]ConfigRangeProperties{
 			configKeyTemp: {
-				Default: 25.0,
-				Min:     20.0,
-				Max:     30.0,
-				Step:    0.5,
+				Min:  20.0,
+				Max:  30.0,
+				Step: 0.5,
 			},
 			configKeyStart: {
-				Default: 13,
-				Min:     0,
-				Max:     23,
-				Step:    1,
+				Min:  0,
+				Max:  23,
+				Step: 1,
 			},
 			configKeyEnd: {
-				Default: 16,
-				Min:     0,
-				Max:     23,
-				Step:    1,
+				Min:  0,
+				Max:  23,
+				Step: 1,
 			},
+		},
+	}
+}
+
+func (c PoolTempController) GetDefaultConfig() Config {
+	return Config{
+		Toggles: map[string]bool{
+			configKeyEnabled: false,
+		},
+		Ranges: map[string]float64{
+			configKeyTemp:  26,
+			configKeyStart: 10,
+			configKeyEnd:   16,
 		},
 	}
 }
@@ -131,6 +139,10 @@ func (c delayedOperation) ValidateConfig(Config) error {
 	return nil
 }
 
+func (c delayedOperation) GetDefaultConfig() Config {
+	return EmptyConfig()
+}
+
 func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 	if c.pendingOperation {
 		select {
@@ -179,5 +191,5 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 }
 
 func (c *PoolTempController) GetName() string {
-	return "PoolTempController"
+	return "Temperature controller"
 }
