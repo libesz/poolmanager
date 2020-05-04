@@ -32,10 +32,19 @@ func (t *MockTimer) Get() bool {
 	return t.getReturns
 }
 
+func TestPumpDefaultConfig(t *testing.T) {
+	timer := &MockTimer{}
+	c := NewPoolPumpController(timer, timer)
+	config := c.GetDefaultConfig()
+	if err := c.ValidateConfig(config); err != nil {
+		t.Fatal("Default config validation error", err.Error())
+	}
+}
+
 func TestNormal(t *testing.T) {
 	timer := &MockTimer{}
 	c := NewPoolPumpController(timer, timer)
-	config := Config{Ranges: map[string]float64{"desired runtime per day": 1}}
+	config := Config{Ranges: map[string]float64{configKeyRuntime: 1}}
 	c.Act(config)
 	if timer.setCalledWith != true {
 		t.Error("Timer output shall be started")

@@ -51,6 +51,22 @@ func (s *MockTempSensor) Value() float64 {
 	return s.Temperature
 }
 
+func TestDefaultTempConfigPasses(t *testing.T) {
+	heater := &MockHeater{}
+	pumpOutput := &MockPump{}
+	tempSensor := &MockTempSensor{}
+	c := PoolTempController{
+		heaterFactor: 0.5,
+		heaterOutput: heater,
+		pumpOutput:   pumpOutput,
+		tempSensor:   tempSensor,
+	}
+	config := c.GetDefaultConfig()
+	if err := c.ValidateConfig(config); err != nil {
+		t.Fatal("Default config validation error", err.Error())
+	}
+}
+
 func TestTemp(t *testing.T) {
 	heater := &MockHeater{}
 	pumpOutput := &MockPump{}
@@ -61,7 +77,7 @@ func TestTemp(t *testing.T) {
 		pumpOutput:   pumpOutput,
 		tempSensor:   tempSensor,
 	}
-	config := Config{Toggles: map[string]bool{"enabled": true}, Ranges: map[string]float64{"desired temperature": 28.0, "start hour": 10, "end hour": 13}}
+	config := Config{Toggles: map[string]bool{configKeyEnabled: true}, Ranges: map[string]float64{configKeyTemp: 28.0, configKeyStart: 10, configKeyEnd: 13}}
 
 	// Early morning, no heat
 	tempSensor.Temperature = 25
