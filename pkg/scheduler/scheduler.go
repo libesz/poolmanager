@@ -33,12 +33,12 @@ func (s *Scheduler) GetConfigProperties(controllerName string) controller.Config
 func (s *Scheduler) ConfigUpdated(controllerName string, config controller.Config) error {
 	c, ok := s.controllers[controllerName]
 	if !ok {
-		return fmt.Errorf("Controller not found: %s", controllerName)
+		return fmt.Errorf("Scheduler: Controller not found: %s", controllerName)
 	}
 	if err := c.ValidateConfig(config); err != nil {
 		return err
 	}
-	log.Printf("Scheduler: scheduling controller: %s\n", controllerName)
+	log.Printf("Scheduler: config changed for controller: %s\n", controllerName)
 	s.cancel(controllerName)
 	s.enqueue(schedulerTask{controller: c, config: config})
 	return nil
@@ -67,9 +67,10 @@ func (s *Scheduler) Run(stopChan chan struct{}) {
 					timer := time.After(request.After)
 					select {
 					case <-timer:
+						log.Printf("Scheduler: enqueing task for controller: %s\n", request.Controller.GetName())
 						s.enqueue(schedulerTask{controller: request.Controller, config: request.Config})
 					case <-queueItem:
-						log.Printf("Cancelling task for controller: %s\n", request.Controller.GetName())
+						log.Printf("Scheduler: cancelling task for controller: %s\n", request.Controller.GetName())
 					}
 				}(reEnqueAfter)
 			}
@@ -78,7 +79,7 @@ func (s *Scheduler) Run(stopChan chan struct{}) {
 			if ok {
 				close(queueItem)
 			} else {
-				log.Printf("Scheduler: could not cancel any task for controller: %s\n", cancelRequest.controller)
+				log.Printf("Scheduler: no task enqueued for controller: %s\n", cancelRequest.controller)
 			}
 			s.queue[cancelRequest.controller] = nil
 			close(cancelRequest.result)
