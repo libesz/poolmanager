@@ -3,6 +3,7 @@ import {MDCSlider} from '@material/slider';
 import {MDCSnackbar} from '@material/snackbar';
 import {MDCIconButtonToggle} from '@material/icon-button';
 import {MDCRipple} from '@material/ripple';
+import {MDCSwitch} from '@material/switch';
 
 
 // Instantiation
@@ -10,6 +11,16 @@ const topAppBarElement = document.querySelector('.mdc-top-app-bar');
 const topAppBar = new MDCTopAppBar(topAppBarElement);
 const snackbar = new MDCSnackbar(document.querySelector('.mdc-snackbar'));
 const iconButtonRipple = new MDCRipple(document.querySelector('.mdc-button'));
+
+const switches = document.querySelectorAll('.mdc-switch');
+switches.forEach(s => {
+    const mDCSwitch = new MDCSwitch(s)
+    const native = s.querySelector('.mdc-switch__native-control')
+    native.addEventListener('change', () => {
+        console.log(`Value of ${s.attributes['controller'].value} key ${s.attributes['key'].value} changed to ${native.attributes['aria-checked'].value}`)
+        updateConfigItem(s.attributes['controller'].value, "toggle", s.attributes['key'].value, native.attributes['aria-checked'].value, function(resetValue){mDCSwitch.checked(resetValue)})
+    })
+});
 
 const sliders = document.querySelectorAll('.mdc-slider')
 sliders.forEach(slider => {
