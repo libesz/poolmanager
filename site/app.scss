@@ -19,3 +19,12 @@ html, body {
     display: flex;
     margin: 0px;
 }
+
+.mdc-layout-grid__cell {
+    padding: 16px;
+    background-color: rgb(235, 235, 235);
+}
+
+.slider-label {
+    margin-bottom: 0px;
+}

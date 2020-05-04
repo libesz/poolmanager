@@ -131,7 +131,7 @@ func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter
 }
 
 func respondError(w http.ResponseWriter, origValue interface{}, err error) {
-	w.WriteHeader(http.StatusInternalServerError)
+	w.WriteHeader(http.StatusConflict)
 	u := JsonResponse{Error: err.Error(), OrigValue: origValue}
 	json.NewEncoder(w).Encode(u)
 }

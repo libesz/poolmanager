@@ -9,7 +9,7 @@
   </head>
   <body class="home mdc-typography">
     <div id="root">
-      <header class="mdc-top-app-bar mdc-top-app-bar--fixed">
+      <header class="mdc-top-app-bar mdc-top-app-bar--fixed mdc-top-app-bar--dense">
         <div class="mdc-top-app-bar__row">
           <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
             <button class="mdc-icon-button material-icons mdc-top-app-bar__navigation-icon--unbounded">menu</button><span class="mdc-top-app-bar__title">Pool manager</span> </section>
@@ -18,7 +18,7 @@
           </section>
         </div>
       </header>
-      <div id="content" class="mdc-top-app-bar--fixed-adjust">
+      <div id="content" class="mdc-top-app-bar--dense-fixed-adjust">
         <div class="mdc-layout-grid">
           <form method="POST">
           <div class="mdc-layout-grid__inner">
@@ -28,8 +28,18 @@
               {{range $controller, $configProperty := .ConfigProperties}}
               <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
                 <h2 class="mdc-typography--headline6">Controller: {{$controller}}</h2>
+                  {{range $key, $item := $configProperty.Toggles}}
+                    <div class="mdc-switch" controller="{{$controller}}" key="{{$key}}">
+                      <div class="mdc-switch__track"></div>
+                      <div class="mdc-switch__thumb-underlay">
+                        <div class="mdc-switch__thumb"></div>
+                        <input type="checkbox" id="{{$controller}}-{{$key}}" class="mdc-switch__native-control" role="switch" aria-checked="{{ with (index $ConfigValues $controller) }}{{ with (index .Toggles $key) }}{{.}}{{ end }}{{ end }}">
+                      </div>
+                    </div>
+                    <label for="{{$controller}}-{{$key}}">{{$key}}</label>
+                  {{end}}
                   {{range $key, $item := $configProperty.Ranges}}
-                    <p>{{$key}}:</p>
+                    <p class="slider-label">{{$key}}:</p>
                     <div class="mdc-slider" tabindex="0" role="slider"
                       aria-valuemin="{{$item.Min}}" aria-valuemax="{{$item.Max}}" aria-valuenow="{{ with (index $ConfigValues $controller) }}{{ with (index .Ranges $key) }}{{.}}{{ end }}{{ end }}"
                       aria-label="Select Value" data-step="{{$item.Step}}" controller="{{$controller}}" key="{{$key}}">
@@ -43,16 +53,6 @@
                         <div class="mdc-slider__focus-ring"></div>
                       </div>
                     </div>
-                  {{end}}
-                  {{range $key, $item := $configProperty.Toggles}}
-                    <div class="mdc-switch" controller="{{$controller}}" key="{{$key}}">
-                      <div class="mdc-switch__track"></div>
-                      <div class="mdc-switch__thumb-underlay">
-                        <div class="mdc-switch__thumb"></div>
-                        <input type="checkbox" id="{{$controller}}-{{$key}}" class="mdc-switch__native-control" role="switch" aria-checked="{{ with (index $ConfigValues $controller) }}{{ with (index .Toggles $key) }}{{.}}{{ end }}{{ end }}">
-                      </div>
-                    </div>
-                    <label for="{{$controller}}-{{$key}}">{{$key}}</label>
                   {{end}}
               </div>
               {{end}}

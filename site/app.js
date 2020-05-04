@@ -20,13 +20,14 @@ switches.forEach(s => {
         console.log(`Value of ${s.attributes['controller'].value} key ${s.attributes['key'].value} changed to ${native.attributes['aria-checked'].value}`)
         updateConfigItem(s.attributes['controller'].value, "toggle", s.attributes['key'].value, native.attributes['aria-checked'].value, function(resetValue){mDCSwitch.checked(resetValue)})
     })
+    mDCSwitch.checked = native.attributes['aria-checked'].value
 });
 
 const sliders = document.querySelectorAll('.mdc-slider')
 sliders.forEach(slider => {
     const mDCSlider = new MDCSlider(slider)
     mDCSlider.listen('MDCSlider:change', () => {
-        console.log(`Value of ${slider.attributes['controller'].value} key ${slider.attributes['key'].value} changed to ${mDCSlider.value}`)
+        //console.log(`Value of ${slider.attributes['controller'].value} key ${slider.attributes['key'].value} changed to ${mDCSlider.value}`)
         updateConfigItem(slider.attributes['controller'].value, "range", slider.attributes['key'].value, mDCSlider.value, function(resetValue){mDCSlider.value = resetValue})
     });
 
