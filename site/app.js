@@ -4,13 +4,25 @@ import {MDCSnackbar} from '@material/snackbar';
 import {MDCIconButtonToggle} from '@material/icon-button';
 import {MDCRipple} from '@material/ripple';
 import {MDCSwitch} from '@material/switch';
-
+import {MDCMenu} from '@material/menu';
+import {MDCMenuSurface} from '@material/menu-surface'
 
 // Instantiation
 const topAppBarElement = document.querySelector('.mdc-top-app-bar');
 const topAppBar = new MDCTopAppBar(topAppBarElement);
 const snackbar = new MDCSnackbar(document.querySelector('.mdc-snackbar'));
-const iconButtonRipple = new MDCRipple(document.querySelector('.mdc-button'));
+const menu = new MDCMenu(document.querySelector('.mdc-menu'));
+
+document.getElementById("more-button").addEventListener('click', () => {
+    menu.open = true;
+})
+
+menu.setAnchorElement(document.getElementById("more-button"))
+
+const buttons = document.querySelectorAll('.mdc-button');
+buttons.forEach(b => {
+    const mDCRipple = new MDCRipple(b);
+})
 
 const switches = document.querySelectorAll('.mdc-switch');
 switches.forEach(s => {

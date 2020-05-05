@@ -14,10 +14,21 @@
           <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
             <button class="mdc-icon-button material-icons mdc-top-app-bar__navigation-icon--unbounded">menu</button><span class="mdc-top-app-bar__title">Pool manager</span> </section>
           <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
-            <button class="mdc-icon-button material-icons mdc-top-app-bar__action-item--unbounded" aria-label="Bookmark this page">bookmark</button>
+            <div class="mdc-menu-surface--anchor"></div>
+            <button class="mdc-icon-button material-icons mdc-top-app-bar__action-item--unbounded" id="more-button" aria-label="More">more_vert</button>
           </section>
         </div>
       </header>
+      <div class="mdc-menu mdc-menu-surface">
+        <ul class="mdc-list" role="menu" aria-hidden="true" aria-orientation="vertical" tabindex="-1">
+          <li class="mdc-list-item" role="menuitem">
+            <span class="mdc-list-item__text">A Menu Item</span>
+          </li>
+          <li class="mdc-list-item" role="menuitem">
+            <span class="mdc-list-item__text">Another Menu Item</span>
+          </li>
+        </ul>
+      </div>
       <div id="content" class="mdc-top-app-bar--dense-fixed-adjust">
         <div class="mdc-layout-grid">
           <div class="mdc-layout-grid__inner">

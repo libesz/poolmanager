@@ -51,6 +51,12 @@ func main() {
 		log.Fatalf("Failed to set initial config for PoolPumpController: %s\n", err.Error())
 	}
 
-	webui.Run(&c)
+	wg.Add(1)
+	w := webui.New(&c)
+	go func() {
+		w.Run(stopChan)
+		wg.Done()
+	}()
+
 	wg.Wait()
 }

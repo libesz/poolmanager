@@ -20,28 +20,44 @@ import (
 var parsedTemplates *template.Template
 var store = sessions.NewCookieStore([]byte("temp"))
 
-func Run(configStore *configstore.ConfigStore) {
+func New(configStore *configstore.ConfigStore) WebUI {
+	s := sessions.NewCookieStore([]byte("temp"))
 	r := mux.NewRouter()
 	parsedTemplates = template.Must(vfstemplate.ParseGlob(templates.Content, nil, "*.html"))
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(static.Content)))
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		homeHandler(configStore, w, r)
+		homeHandler(s, configStore, w, r)
 	}).Methods("GET")
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		homePostHandler(configStore, w, r)
 	}).Methods("POST")
 
-	srv := &http.Server{
+	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		loginPostHandler(s, w, r)
+	}).Methods("POST")
+
+	r.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		logoutGetHandler(s, w, r)
+	}).Methods("GET")
+
+	server := &http.Server{
 		Handler:      r,
 		Addr:         ":8000",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
+	return WebUI{server: server, sessions: s}
+}
 
-	log.Fatal(srv.ListenAndServe())
+func (w *WebUI) Run(stopChan chan struct{}) {
+	go func() {
+		log.Fatal(w.server.ListenAndServe())
+	}()
+	<-stopChan
+	w.server.Close()
 }
 
 type PageData struct {
@@ -51,18 +67,35 @@ type PageData struct {
 	Debug            string
 }
 
-func homeHandler(configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
+func homeHandler(s *sessions.CookieStore, configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
+
+	session, _ := s.Get(r, "session")
+	loggedIn, ok := session.Values["logged-in"].(bool)
+	if !ok {
+		loggedIn = false
+	}
+
+	function := "default"
+	if !loggedIn {
+		function = "loggedout"
+	}
+
 	data := PageData{
 		ConfigProperties: make(map[string]controller.ConfigProperties),
 		ConfigValues:     make(map[string]controller.Config),
-		Function:         "default"}
-	controllers := configStore.GetKeys()
-	for _, controllerName := range controllers {
-		data.ConfigProperties[controllerName] = configStore.GetProperties(controllerName)
-		data.ConfigValues[controllerName] = configStore.Get(controllerName)
+		Function:         function,
 	}
-	log.Printf("%+v\n", data)
+
+	if loggedIn {
+		controllers := configStore.GetKeys()
+		for _, controllerName := range controllers {
+			data.ConfigProperties[controllerName] = configStore.GetProperties(controllerName)
+			data.ConfigValues[controllerName] = configStore.Get(controllerName)
+		}
+	}
+
+	log.Printf("Webui: rendering page with data: %+v\n", data)
 	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
 		log.Println(err.Error())
 	}
@@ -85,7 +118,7 @@ func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter
 	var data JsonRequest
 	err := decoder.Decode(&data)
 	if err != nil {
-		log.Printf("Webui: ecode error on request: %s\n", err.Error())
+		log.Printf("Webui: decode error on request: %s\n", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -134,4 +167,42 @@ func respondError(w http.ResponseWriter, origValue interface{}, err error) {
 	w.WriteHeader(http.StatusConflict)
 	u := JsonResponse{Error: err.Error(), OrigValue: origValue}
 	json.NewEncoder(w).Encode(u)
+}
+
+type LoginRequest struct {
+	Password string `json:"password"`
+}
+
+func loginPostHandler(s *sessions.CookieStore, w http.ResponseWriter, r *http.Request) {
+	log.Printf("Webui: requested login\n")
+	decoder := json.NewDecoder(r.Body)
+	var data LoginRequest
+	err := decoder.Decode(&data)
+	if err != nil {
+		log.Printf("Webui: decode error on request: %s\n", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if data.Password != "dummy" {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	log.Printf("Webui: user authorized\n")
+	session, _ := s.Get(r, "session")
+	session.Values["logged-in"] = true
+	session.Save(r, w)
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func logoutGetHandler(s *sessions.CookieStore, w http.ResponseWriter, r *http.Request) {
+	log.Printf("Webui: requested logout\n")
+	session, _ := s.Get(r, "session")
+	if loggedIn, ok := session.Values["logged-in"].(bool); !ok || !loggedIn {
+		log.Printf("Webui: not logged in while requesting logout\n")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	session.Values["logged-in"] = false
+	session.Save(r, w)
 }
