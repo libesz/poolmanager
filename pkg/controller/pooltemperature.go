@@ -43,21 +43,26 @@ const (
 
 func (c PoolTempController) GetConfigProperties() ConfigProperties {
 	return ConfigProperties{
-		Toggles: map[string]ConfigToggleProperties{
-			configKeyEnabled: {},
+		Toggles: []ConfigToggleProperties{
+			{
+				Name: configKeyEnabled,
+			},
 		},
-		Ranges: map[string]ConfigRangeProperties{
-			configKeyTemp: {
+		Ranges: []ConfigRangeProperties{
+			{
+				Name: configKeyTemp,
 				Min:  20.0,
 				Max:  30.0,
 				Step: 0.5,
 			},
-			configKeyStart: {
+			{
+				Name: configKeyStart,
 				Min:  0,
 				Max:  23,
 				Step: 1,
 			},
-			configKeyEnd: {
+			{
+				Name: configKeyEnd,
 				Min:  0,
 				Max:  23,
 				Step: 1,

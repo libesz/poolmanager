@@ -26,26 +26,26 @@
               {{range $controller, $configProperty := .ConfigProperties}}
               <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
                 <h2 class="mdc-typography--headline6">{{$controller}}</h2>
-                  {{range $key, $item := $configProperty.Toggles}}
-                    <div class="mdc-switch" controller="{{$controller}}" key="{{$key}}">
+                  {{range $index, $item := $configProperty.Toggles}}
+                    <div class="mdc-switch" controller="{{$controller}}" key="{{$item.Name}}">
                       <div class="mdc-switch__track"></div>
                       <div class="mdc-switch__thumb-underlay">
                         <div class="mdc-switch__thumb"></div>
-                        <input type="checkbox" id="{{$controller}}-{{$key}}" class="mdc-switch__native-control" role="switch" aria-checked="{{ with (index $ConfigValues $controller) }}{{ with (index .Toggles $key) }}{{.}}{{ end }}{{ end }}">
+                        <input type="checkbox" id="{{$controller}}-{{$item.Name}}" class="mdc-switch__native-control" role="switch" aria-checked="{{ with (index $ConfigValues $controller) }}{{ with (index .Toggles $item.Name) }}{{.}}{{ end }}{{ end }}">
                       </div>
                     </div>
-                    <label class="switch-label" for="{{$controller}}-{{$key}}">{{$key}}</label>
+                    <label class="switch-label" for="{{$controller}}-{{$item.Name}}">{{$item.Name}}</label>
                   {{end}}
-                  {{range $key, $item := $configProperty.Ranges}}
-                    <p class="slider-label">{{$key}}:</p>
+                  {{range $index, $item := $configProperty.Ranges}}
+                    <p class="slider-label">{{$item.Name}}:</p>
                     <div class="slider-value-wrapper">
                       <div class="slider-value-div-min">
                         <p class="slider-value-min">{{$item.Min}}</p>
                       </div>
                       <div class="slider-value-div">
                       <div class="mdc-slider" tabindex="0" role="slider"
-                        aria-valuemin="{{$item.Min}}" aria-valuemax="{{$item.Max}}" aria-valuenow="{{ with (index $ConfigValues $controller) }}{{ with (index .Ranges $key) }}{{.}}{{ end }}{{ end }}"
-                        aria-label="Select Value" data-step="{{$item.Step}}" controller="{{$controller}}" key="{{$key}}">
+                        aria-valuemin="{{$item.Min}}" aria-valuemax="{{$item.Max}}" aria-valuenow="{{ with (index $ConfigValues $controller) }}{{ with (index .Ranges $item.Name) }}{{.}}{{ end }}{{ end }}"
+                        aria-label="Select Value" data-step="{{$item.Step}}" controller="{{$controller}}" key="{{$item.Name}}">
                         <div class="mdc-slider__track-container">
                           <div class="mdc-slider__track"></div>
                         </div>

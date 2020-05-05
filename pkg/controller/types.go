@@ -3,23 +3,25 @@ package controller
 import "time"
 
 type ConfigRangeProperties struct {
+	Name string
 	Min  float64
 	Max  float64
 	Step float64
 }
 
 type ConfigToggleProperties struct {
+	Name string
 }
 
 type ConfigProperties struct {
-	Ranges  map[string]ConfigRangeProperties
-	Toggles map[string]ConfigToggleProperties
+	Ranges  []ConfigRangeProperties
+	Toggles []ConfigToggleProperties
 }
 
 func EmptyProperties() ConfigProperties {
 	return ConfigProperties{
-		Ranges:  make(map[string]ConfigRangeProperties),
-		Toggles: make(map[string]ConfigToggleProperties),
+		Ranges:  []ConfigRangeProperties{},
+		Toggles: []ConfigToggleProperties{},
 	}
 }
 

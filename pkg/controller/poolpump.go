@@ -21,11 +21,12 @@ func NewPoolPumpController(timer io.Input, pumpOutput io.Output) PoolPumpControl
 
 func (c *PoolPumpController) GetConfigProperties() ConfigProperties {
 	return ConfigProperties{
-		Toggles: map[string]ConfigToggleProperties{
-			configKeyEnabled: {},
+		Toggles: []ConfigToggleProperties{
+			{Name: configKeyEnabled},
 		},
-		Ranges: map[string]ConfigRangeProperties{
-			configKeyRuntime: {
+		Ranges: []ConfigRangeProperties{
+			{
+				Name: configKeyRuntime,
 				Min:  0,
 				Max:  8,
 				Step: 1,
