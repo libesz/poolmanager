@@ -31,9 +31,9 @@ sliders.forEach(slider => {
         updateConfigItem(slider.attributes['controller'].value, "range", slider.attributes['key'].value, mDCSlider.value, function(resetValue){mDCSlider.value = resetValue; slider.querySelector('.slider-value').textContent = mDCSlider.value})
     });
     mDCSlider.listen('MDCSlider:input', () => {
-        slider.querySelector('.slider-value').textContent = mDCSlider.value
+        document.getElementById('slider-value-'+slider.attributes['controller'].value+'-'+slider.attributes['key'].value).textContent = mDCSlider.value
     });
-    slider.querySelector('.slider-value').textContent = mDCSlider.value
+    document.getElementById('slider-value-'+slider.attributes['controller'].value+'-'+slider.attributes['key'].value).textContent = mDCSlider.value
 
     //This is to correctly render sliders. Ref: https://github.com/material-components/material-components-web/issues/1017
     window.addEventListener('load', () => {

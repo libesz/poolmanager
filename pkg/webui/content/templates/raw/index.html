@@ -37,7 +37,7 @@
                     <label class="switch-label" for="{{$controller}}-{{$item.Name}}">{{$item.Name}}</label>
                   {{end}}
                   {{range $index, $item := $configProperty.Ranges}}
-                    <p class="slider-label">{{$item.Name}}:</p>
+                    <p class="slider-label">{{$item.Name}}: <span id="slider-value-{{$controller}}-{{$item.Name}}"></span></p>
                     <div class="slider-value-wrapper">
                       <div class="slider-value-div-min">
                         <p class="slider-value-min">{{$item.Min}}</p>
@@ -55,14 +55,13 @@
                           </svg>
                           <div class="mdc-slider__focus-ring"></div>
                         </div>
-                          <p class="slider-value"></p>
-                        </div>
-                      </div>
-                      <div class="slider-value-div-max">
-                        <p class="slider-value-max">{{$item.Max}}</p>
                       </div>
                     </div>
-                  {{end}}
+                    <div class="slider-value-div-max">
+                      <p class="slider-value-max">{{$item.Max}}</p>
+                    </div>
+                  </div>
+                {{end}}
               </div>
               {{end}}
               {{else}}
