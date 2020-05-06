@@ -78,7 +78,7 @@ func homeHandler(s *sessions.CookieStore, configStore *configstore.ConfigStore, 
 
 	function := "default"
 	if !loggedIn {
-		function = "loggedout"
+		function = "login"
 	}
 
 	data := PageData{
@@ -185,6 +185,7 @@ func loginPostHandler(s *sessions.CookieStore, w http.ResponseWriter, r *http.Re
 	}
 
 	if data.Password != "dummy" {
+		log.Printf("Webui: user unauthorized\n")
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -205,4 +206,5 @@ func logoutGetHandler(s *sessions.CookieStore, w http.ResponseWriter, r *http.Re
 	}
 	session.Values["logged-in"] = false
 	session.Save(r, w)
+	http.Redirect(w, r, "/", http.StatusFound)
 }

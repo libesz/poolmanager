@@ -14,25 +14,34 @@
           <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
             <button class="mdc-icon-button material-icons mdc-top-app-bar__navigation-icon--unbounded">menu</button><span class="mdc-top-app-bar__title">Pool manager</span> </section>
           <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
-            <div class="mdc-menu-surface--anchor"></div>
             <button class="mdc-icon-button material-icons mdc-top-app-bar__action-item--unbounded" id="more-button" aria-label="More">more_vert</button>
           </section>
         </div>
       </header>
-      <div class="mdc-menu mdc-menu-surface">
-        <ul class="mdc-list" role="menu" aria-hidden="true" aria-orientation="vertical" tabindex="-1">
-          <li class="mdc-list-item" role="menuitem">
-            <span class="mdc-list-item__text">A Menu Item</span>
-          </li>
-          <li class="mdc-list-item" role="menuitem">
-            <span class="mdc-list-item__text">Another Menu Item</span>
-          </li>
-        </ul>
-      </div>
       <div id="content" class="mdc-top-app-bar--dense-fixed-adjust">
         <div class="mdc-layout-grid">
           <div class="mdc-layout-grid__inner">
-            {{if eq .Function "default"}}
+          {{if eq .Function "login"}}
+            <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
+              <h2 class="mdc-typography--headline6">Login</h2>
+              <div class="password-input-wrapper">
+                <div class="password-input-text">
+                  <label class="mdc-text-field mdc-text-field--filled">
+                  <span class="mdc-text-field__ripple"></span>
+                  <input class="mdc-text-field__input password-input-field" type="password" aria-labelledby="my-label-id" required minlength="8">
+                  <span class="mdc-floating-label" id="my-label-id">Password</span>
+                  <span class="mdc-line-ripple"></span>
+                </label>
+                </div>
+                <div class="password-input-button">
+                  <button class="mdc-button mdc-button--raised password-button">
+                    <span class="mdc-button__label">Login</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          {{end}}
+          {{if eq .Function "default"}}
               {{ $ConfigValues := .ConfigValues }}
               {{range $controller, $configProperty := .ConfigProperties}}
               <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
@@ -96,9 +105,9 @@
         </div>
       </div>
     </div>
-    <script src="static/bundle.js" async></script>
     <script langauage = "javascript">
-
+      const pageFunction = "{{.Function}}"
     </script>
+    <script src="static/bundle.js" async></script>
   </body>
 </html>

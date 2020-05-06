@@ -16,9 +16,8 @@
 @use "@material/checkbox/mdc-checkbox";
 @use "@material/snackbar/mdc-snackbar";
 @use "@material/switch/mdc-switch";
-@use "@material/list/mdc-list";
-@use "@material/menu-surface/mdc-menu-surface";
-@use "@material/menu/mdc-menu";
+@use "@material/textfield";
+@include textfield.core-styles;
 @import "@material/layout-grid/mdc-layout-grid";
 @include button.core-styles;
 
@@ -43,11 +42,23 @@ html, body {
     margin-bottom: 0px;
 }
 
-.slider-value-wrapper {
+.slider-value-wrapper, .password-input-wrapper {
     margin-top: 0px;
     width:100%;
     text-align:center;
     display: block
+}
+
+.password-input-text {
+    float:left;
+//    border: 1px solid red;
+    width: 70%;
+}
+
+.password-input-button {
+    //    border: 1px solid green;
+        float:right;
+    //    width: 15%
 }
 
 .slider-value-div-min {
