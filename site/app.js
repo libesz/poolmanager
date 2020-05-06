@@ -62,7 +62,7 @@ if (pageFunction == "default") {
         const mDCSlider = new MDCSlider(slider)
         mDCSlider.listen('MDCSlider:change', () => {
             //console.log(`Value of ${slider.attributes['controller'].value} key ${slider.attributes['key'].value} changed to ${mDCSlider.value}`)
-            updateConfigItem(slider.attributes['controller'].value, "range", slider.attributes['key'].value, mDCSlider.value, function(resetValue){mDCSlider.value = resetValue; slider.querySelector('.slider-value').textContent = mDCSlider.value})
+            updateConfigItem(slider.attributes['controller'].value, "range", slider.attributes['key'].value, mDCSlider.value, function(resetValue){mDCSlider.value = resetValue; document.getElementById('slider-value-'+slider.attributes['controller'].value+'-'+slider.attributes['key'].value).textContent = mDCSlider.value})
         });
         mDCSlider.listen('MDCSlider:input', () => {
             document.getElementById('slider-value-'+slider.attributes['controller'].value+'-'+slider.attributes['key'].value).textContent = mDCSlider.value
