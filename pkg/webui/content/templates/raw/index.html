@@ -14,7 +14,9 @@
           <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
             <button class="mdc-icon-button material-icons mdc-top-app-bar__navigation-icon--unbounded">menu</button><span class="mdc-top-app-bar__title">Pool manager</span> </section>
           <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
-            <button class="mdc-icon-button material-icons mdc-top-app-bar__action-item--unbounded" id="more-button" aria-label="More">more_vert</button>
+            {{if eq .Function "default"}}
+            <button class="mdc-icon-button material-icons mdc-top-app-bar__action-item--unbounded logout-button" aria-label="Logout">exit_to_app</button>
+            {{end}}
           </section>
         </div>
       </header>

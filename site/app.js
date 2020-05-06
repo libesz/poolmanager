@@ -43,6 +43,9 @@ if (pageFunction == "login") {
 }
 
 if (pageFunction == "default") {
+    const logoutButton = document.querySelector('.logout-button');
+    logoutButton.addEventListener('click', () => {location.href = '/logout'})
+
     const switches = document.querySelectorAll('.mdc-switch');
     switches.forEach(s => {
         const mDCSwitch = new MDCSwitch(s)
