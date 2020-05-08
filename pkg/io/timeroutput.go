@@ -22,6 +22,10 @@ func NewTimerOutput(name string, output Output, now func() time.Time) TimerOutpu
 	}
 }
 
+func (t *TimerOutput) Name() string {
+	return t.name
+}
+
 func (t *TimerOutput) Type() string {
 	return "time"
 }

@@ -32,6 +32,10 @@ func (t *MockTimer) Get() bool {
 	return t.getReturns
 }
 
+func (t *MockTimer) Name() string {
+	return "dummy"
+}
+
 func TestPumpDefaultConfig(t *testing.T) {
 	timer := &MockTimer{}
 	c := NewPoolPumpController(timer, timer)

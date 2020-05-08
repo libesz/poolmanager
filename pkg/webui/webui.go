@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/libesz/poolmanager/pkg/configstore"
 	"github.com/libesz/poolmanager/pkg/controller"
+	"github.com/libesz/poolmanager/pkg/io"
 	"github.com/libesz/poolmanager/pkg/webui/content/static"
 	"github.com/libesz/poolmanager/pkg/webui/content/templates"
 	"github.com/shurcooL/httpfs/html/vfstemplate"
@@ -20,7 +21,7 @@ import (
 var parsedTemplates *template.Template
 var store = sessions.NewCookieStore([]byte("temp"))
 
-func New(configStore *configstore.ConfigStore) WebUI {
+func New(configStore *configstore.ConfigStore, sensors []io.Input) WebUI {
 	s := sessions.NewCookieStore([]byte("temp"))
 	r := mux.NewRouter()
 	parsedTemplates = template.Must(vfstemplate.ParseGlob(templates.Content, nil, "*.html"))
@@ -28,7 +29,7 @@ func New(configStore *configstore.ConfigStore) WebUI {
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(static.Content)))
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		homeHandler(s, configStore, w, r)
+		homeHandler(s, configStore, sensors, w, r)
 	}).Methods("GET")
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -63,11 +64,12 @@ func (w *WebUI) Run(stopChan chan struct{}) {
 type PageData struct {
 	ConfigProperties map[string]controller.ConfigProperties
 	ConfigValues     map[string]controller.Config
+	Sensors          []io.Input
 	Function         string
 	Debug            string
 }
 
-func homeHandler(s *sessions.CookieStore, configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
+func homeHandler(s *sessions.CookieStore, configStore *configstore.ConfigStore, sensors []io.Input, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	session, _ := s.Get(r, "session")
@@ -93,6 +95,7 @@ func homeHandler(s *sessions.CookieStore, configStore *configstore.ConfigStore, 
 			data.ConfigProperties[controllerName] = configStore.GetProperties(controllerName)
 			data.ConfigValues[controllerName] = configStore.Get(controllerName)
 		}
+		data.Sensors = sensors
 	}
 
 	log.Printf("Webui: rendering page with data: %+v\n", data)

@@ -11,6 +11,10 @@ type MockHeater struct {
 	getReturns bool
 }
 
+func (m *MockHeater) Name() string {
+	return "dummy"
+}
+
 func (m *MockHeater) Set(value bool) bool {
 	m.calledWith = value
 	return m.setReturns
@@ -35,8 +39,16 @@ func (m *MockPump) Get() bool {
 	return m.getReturn
 }
 
+func (m *MockPump) Name() string {
+	return "dummy"
+}
+
 type MockTempSensor struct {
 	Temperature float64
+}
+
+func (s *MockTempSensor) Name() string {
+	return "dummy"
 }
 
 func (s *MockTempSensor) Type() string {

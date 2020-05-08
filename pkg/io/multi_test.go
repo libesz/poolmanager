@@ -3,9 +3,9 @@ package io
 import "testing"
 
 func TestMultiOut(t *testing.T) {
-	dummy1 := DummyOutput{Name: "dummy1"}
-	dummy2 := DummyOutput{Name: "dummy2"}
-	multi := NewMultiOutput([]Output{&dummy1, &dummy2})
+	dummy1 := DummyOutput{Name_: "dummy1"}
+	dummy2 := DummyOutput{Name_: "dummy2"}
+	multi := NewMultiOutput("dummy", []Output{&dummy1, &dummy2})
 	multi.Set(true)
 	if !dummy1.Value {
 		t.Fatal("Multiplexer set to true. Dummy1 shall be also true")
@@ -23,7 +23,7 @@ func TestMultiOut(t *testing.T) {
 }
 
 func TestOr(t *testing.T) {
-	dummy := DummyOutput{Name: "dummy"}
+	dummy := DummyOutput{Name_: "dummy"}
 	orMembers := NewOrOutput(&dummy, 2)
 	if dummy.Value {
 		t.Fatal("Default state for dummy output shall be false")

@@ -3,20 +3,24 @@ package io
 import "log"
 
 type DummyOutput struct {
-	Name  string
+	Name_ string
 	Value bool
 }
 
-func (a *DummyOutput) Set(value bool) bool {
-	if a.Value == value {
-		log.Printf("Dummy %s unchanged: %t\n", a.Name, value)
+func (d *DummyOutput) Name() string {
+	return d.Name_
+}
+
+func (d *DummyOutput) Set(value bool) bool {
+	if d.Value == value {
+		log.Printf("Dummy %s unchanged: %t\n", d.Name_, value)
 		return false
 	}
-	log.Printf("Dummy %s set to: %t\n", a.Name, value)
-	a.Value = value
+	log.Printf("Dummy %s set to: %t\n", d.Name_, value)
+	d.Value = value
 	return true
 }
 
-func (a *DummyOutput) Get() bool {
-	return a.Value
+func (d *DummyOutput) Get() bool {
+	return d.Value
 }

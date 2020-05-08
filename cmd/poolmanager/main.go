@@ -13,14 +13,14 @@ import (
 )
 
 func main() {
-	pumpOutput := io.DummyOutput{Name: "pumpOutput"}
+	pumpOutput := io.DummyOutput{Name_: "pumpOutput"}
 	timer := io.NewTimerOutput("pumpTimerOutput", &pumpOutput, time.Now)
 	pumpOrOutputMembers := io.NewOrOutput(&timer, 2)
 	pumpController := controller.NewPoolPumpController(&timer, &pumpOrOutputMembers[0])
 	pumpControllerConfig := pumpController.GetDefaultConfig()
 
 	tempSensor := io.DummyTempSensor{Temperature: 26}
-	heaterOutput := &io.DummyOutput{Name: "heater1"}
+	heaterOutput := &io.DummyOutput{Name_: "heater1"}
 	tempController := controller.NewPoolTempController(0.5, &tempSensor, heaterOutput, &pumpOrOutputMembers[1], time.Now)
 	tempControllerConfig := tempController.GetDefaultConfig()
 
@@ -52,7 +52,7 @@ func main() {
 	}
 
 	wg.Add(1)
-	w := webui.New(&c)
+	w := webui.New(&c, []io.Input{&tempSensor, &timer})
 	go func() {
 		w.Run(stopChan)
 		wg.Done()

@@ -8,6 +8,10 @@ func (s *DummyTempSensor) Type() string {
 	return "Temperature"
 }
 
+func (s *DummyTempSensor) Name() string {
+	return "Dummy temperature sensor"
+}
+
 func (s *DummyTempSensor) Degree() string {
 	return "°C"
 }

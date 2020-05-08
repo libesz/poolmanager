@@ -1,11 +1,18 @@
 package io
 
+import "strconv"
+
 type MultiOutput struct {
+	name        string
 	realOutputs []Output
 }
 
-func NewMultiOutput(realOutputs []Output) MultiOutput {
+func NewMultiOutput(name string, realOutputs []Output) MultiOutput {
 	return MultiOutput{realOutputs: realOutputs}
+}
+
+func (m *MultiOutput) Name() string {
+	return m.name
 }
 
 func (m MultiOutput) Set(value bool) {
@@ -20,6 +27,7 @@ type OrOutputMember struct {
 }
 
 type OrOutput struct {
+	name         string
 	realOutput   Output
 	memberStates map[int]bool
 }
@@ -30,6 +38,10 @@ func (o *OrOutputMember) Set(value bool) bool {
 
 func (o *OrOutputMember) Get() bool {
 	return o.master.realOutput.Get()
+}
+
+func (o *OrOutputMember) Name() string {
+	return o.master.name + " member " + strconv.Itoa(o.id)
 }
 
 func (o *OrOutput) setMemberState(i int, value bool) bool {

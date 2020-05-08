@@ -44,6 +44,14 @@
             </div>
           {{end}}
           {{if eq .Function "default"}}
+            <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
+              <h2 class="mdc-typography--headline6">Sensors</h2>
+              {{range $index, $sensor := .Sensors}}
+              <p>
+                {{$sensor.Type}} {{$sensor.Name}} {{$sensor.Value}} {{$sensor.Degree}}
+              </p>
+              {{end}}
+            </div>
               {{ $ConfigValues := .ConfigValues }}
               {{range $controller, $configProperty := .ConfigProperties}}
               <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
