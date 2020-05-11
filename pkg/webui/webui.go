@@ -21,7 +21,7 @@ import (
 var parsedTemplates *template.Template
 var store = sessions.NewCookieStore([]byte("temp"))
 
-func New(configStore *configstore.ConfigStore, sensors []io.Input) WebUI {
+func New(configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output) WebUI {
 	s := sessions.NewCookieStore([]byte("temp"))
 	r := mux.NewRouter()
 	parsedTemplates = template.Must(vfstemplate.ParseGlob(templates.Content, nil, "*.html"))
@@ -29,7 +29,7 @@ func New(configStore *configstore.ConfigStore, sensors []io.Input) WebUI {
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(static.Content)))
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		homeHandler(s, configStore, sensors, w, r)
+		homeHandler(s, configStore, inputs, outputs, w, r)
 	}).Methods("GET")
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -64,12 +64,13 @@ func (w *WebUI) Run(stopChan chan struct{}) {
 type PageData struct {
 	ConfigProperties map[string]controller.ConfigProperties
 	ConfigValues     map[string]controller.Config
-	Sensors          []io.Input
+	Inputs           []io.Input
+	Outputs          []io.Output
 	Function         string
 	Debug            string
 }
 
-func homeHandler(s *sessions.CookieStore, configStore *configstore.ConfigStore, sensors []io.Input, w http.ResponseWriter, r *http.Request) {
+func homeHandler(s *sessions.CookieStore, configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	session, _ := s.Get(r, "session")
@@ -95,7 +96,8 @@ func homeHandler(s *sessions.CookieStore, configStore *configstore.ConfigStore, 
 			data.ConfigProperties[controllerName] = configStore.GetProperties(controllerName)
 			data.ConfigValues[controllerName] = configStore.Get(controllerName)
 		}
-		data.Sensors = sensors
+		data.Inputs = inputs
+		data.Outputs = outputs
 	}
 
 	log.Printf("Webui: rendering page with data: %+v\n", data)

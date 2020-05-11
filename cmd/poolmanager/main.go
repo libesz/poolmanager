@@ -52,7 +52,7 @@ func main() {
 	}
 
 	wg.Add(1)
-	w := webui.New(&c, []io.Input{&tempSensor, &timer})
+	w := webui.New(&c, []io.Input{&tempSensor, &timer}, []io.Output{&pumpOutput, heaterOutput})
 	go func() {
 		w.Run(stopChan)
 		wg.Done()

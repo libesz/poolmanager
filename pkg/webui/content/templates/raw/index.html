@@ -45,10 +45,15 @@
           {{end}}
           {{if eq .Function "default"}}
             <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
-              <h2 class="mdc-typography--headline6">Sensors</h2>
-              {{range $index, $sensor := .Sensors}}
+              <h2 class="mdc-typography--headline6">Status</h2>
+              {{range $index, $input := .Inputs}}
               <p>
-                {{$sensor.Type}} {{$sensor.Name}} {{$sensor.Value}} {{$sensor.Degree}}
+                {{$input.Type}} {{$input.Name}} {{$input.Value}} {{$input.Degree}}
+              </p>
+              {{end}}
+              {{range $index, $output := .Outputs}}
+              <p>
+                {{$output.Name}} {{$output.Get}}
               </p>
               {{end}}
             </div>
