@@ -50,11 +50,13 @@ if (pageFunction == "default") {
     switches.forEach(s => {
         const mDCSwitch = new MDCSwitch(s)
         const native = s.querySelector('.mdc-switch__native-control')
+        const checked = native.attributes['checked'] !== undefined
+        //console.log(mDCSwitch.checked + ' ' + checked)
+        mDCSwitch.checked = checked
         native.addEventListener('change', () => {
             //console.log(`Value of ${s.attributes['controller'].value} key ${s.attributes['key'].value} changed to ${native.attributes['aria-checked'].value}`)
             updateConfigItem(s.attributes['controller'].value, "toggle", s.attributes['key'].value, native.attributes['aria-checked'].value, function(resetValue){mDCSwitch.checked = resetValue})
         })
-        mDCSwitch.checked = native.attributes['aria-checked'].value
     });
 
     const sliders = document.querySelectorAll('.mdc-slider')

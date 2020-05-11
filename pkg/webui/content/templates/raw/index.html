@@ -62,11 +62,13 @@
               <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
                 <h2 class="mdc-typography--headline6">{{$controller}}</h2>
                   {{range $index, $item := $configProperty.Toggles}}
-                    <div class="mdc-switch" controller="{{$controller}}" key="{{$item.Name}}">
+                    {{ $state := false }}
+                    {{ with (index $ConfigValues $controller) }}{{ with (index .Toggles $item.Name) }}{{if eq . true}}{{$state = true}}{{ end }}{{ end }}{{ end }}
+                    <div class="mdc-switch {{if eq $state true}}mdc-switch--checked{{ end }}" controller="{{$controller}}" key="{{$item.Name}}">
                       <div class="mdc-switch__track"></div>
                       <div class="mdc-switch__thumb-underlay">
                         <div class="mdc-switch__thumb"></div>
-                        <input type="checkbox" id="{{$controller}}-{{$item.Name}}" class="mdc-switch__native-control" role="switch" aria-checked="{{ with (index $ConfigValues $controller) }}{{ with (index .Toggles $item.Name) }}{{.}}{{ end }}{{ end }}">
+                        <input type="checkbox" id="{{$controller}}-{{$item.Name}}" class="mdc-switch__native-control" role="switch" {{if eq $state true}}aria-checked="true" checked{{else}}aria-checked="false"{{ end }}>
                       </div>
                     </div>
                     <label class="switch-label" for="{{$controller}}-{{$item.Name}}">{{$item.Name}}</label>

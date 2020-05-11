@@ -38,7 +38,7 @@ func (c *PoolPumpController) GetConfigProperties() ConfigProperties {
 func (c PoolPumpController) GetDefaultConfig() Config {
 	return Config{
 		Toggles: map[string]bool{
-			configKeyEnabled: false,
+			configKeyEnabled: true,
 		},
 		Ranges: map[string]float64{
 			configKeyRuntime: 2,

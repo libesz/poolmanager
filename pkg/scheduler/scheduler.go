@@ -71,7 +71,7 @@ func (s *Scheduler) Run(stopChan chan struct{}) {
 				cancelItemChan := make(chan struct{})
 				s.queue[reEnqueAfter.Controller.GetName()] = cancelItemChan
 				go func(request controller.EnqueueRequest) {
-					if s.configStore != nil {
+					if s.configStore != nil && controller.IsEmptyConfig(request.Config) {
 						if err := s.configStore.Set(request.Controller.GetName(), request.Config, false); err != nil {
 							log.Printf("Scheduler: invalid config pushed back by controller %s: %s. Aborting controller.\n", request.Controller.GetName(), err.Error())
 							return

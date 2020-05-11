@@ -13,3 +13,7 @@ func CopyConfig(orig Config) Config {
 	}
 	return result
 }
+
+func IsEmptyConfig(config Config) bool {
+	return len(config.Ranges) == 0 && len(config.Toggles) == 0
+}
