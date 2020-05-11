@@ -58,6 +58,12 @@ func (s *ConfigStore) Run(stopChan chan struct{}) {
 		case getPropertiesRequest := <-s.getPropertiesChan:
 			getPropertiesRequest.resultChan <- s.hook.GetConfigProperties(getPropertiesRequest.name)
 		case setRequest := <-s.setChan:
+			if orig, ok := all[setRequest.controller]; ok {
+				if controller.IsEqualConfig(orig.config, setRequest.config) {
+					setRequest.resultChan <- nil
+					break
+				}
+			}
 			err := s.hook.ConfigUpdated(setRequest.controller, setRequest.config, setRequest.enqueue)
 			if err == nil {
 				item := configSetItem{controller: setRequest.controller, config: setRequest.config}
