@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/libesz/poolmanager/pkg/configstore"
 	"github.com/libesz/poolmanager/pkg/controller"
 )
 
@@ -15,6 +16,10 @@ func New() Scheduler {
 		controllers: make(map[string]controller.Controller),
 		queue:       make(map[string]chan struct{}),
 	}
+}
+
+func (s *Scheduler) SetConfigStore(configStore *configstore.ConfigStore) {
+	s.configStore = configStore
 }
 
 func (s *Scheduler) AddController(c controller.Controller) {
@@ -30,7 +35,7 @@ func (s *Scheduler) GetConfigProperties(controllerName string) controller.Config
 	return c.GetConfigProperties()
 }
 
-func (s *Scheduler) ConfigUpdated(controllerName string, config controller.Config) error {
+func (s *Scheduler) ConfigUpdated(controllerName string, config controller.Config, enqueue bool) error {
 	c, ok := s.controllers[controllerName]
 	if !ok {
 		return fmt.Errorf("Scheduler: Controller not found: %s", controllerName)
@@ -39,8 +44,10 @@ func (s *Scheduler) ConfigUpdated(controllerName string, config controller.Confi
 		return err
 	}
 	log.Printf("Scheduler: config changed for controller: %s\n", controllerName)
-	s.cancel(controllerName)
-	s.enqueue(schedulerTask{controller: c, config: config})
+	if enqueue {
+		s.cancel(controllerName)
+		s.enqueue(schedulerTask{controller: c, config: config})
+	}
 	return nil
 }
 
@@ -61,15 +68,21 @@ func (s *Scheduler) Run(stopChan chan struct{}) {
 			log.Printf("Scheduler: executing controller: %s\n", task.controller.GetName())
 			reEnqueAfterSet := task.controller.Act(task.config)
 			for _, reEnqueAfter := range reEnqueAfterSet {
-				queueItem := make(chan struct{})
-				s.queue[reEnqueAfter.Controller.GetName()] = queueItem
+				cancelItemChan := make(chan struct{})
+				s.queue[reEnqueAfter.Controller.GetName()] = cancelItemChan
 				go func(request controller.EnqueueRequest) {
+					if s.configStore != nil {
+						if err := s.configStore.Set(request.Controller.GetName(), request.Config, false); err != nil {
+							log.Printf("Scheduler: invalid config pushed back by controller %s: %s. Aborting controller.\n", request.Controller.GetName(), err.Error())
+							return
+						}
+					}
 					timer := time.After(request.After)
 					select {
 					case <-timer:
 						log.Printf("Scheduler: enqueing task for controller: %s\n", request.Controller.GetName())
 						s.enqueue(schedulerTask{controller: request.Controller, config: request.Config})
-					case <-queueItem:
+					case <-cancelItemChan:
 						log.Printf("Scheduler: cancelling task for controller: %s\n", request.Controller.GetName())
 					}
 				}(reEnqueAfter)

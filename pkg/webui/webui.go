@@ -157,7 +157,7 @@ func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter
 	default:
 		log.Printf("Webui: unknown type: %s\n", data.Type)
 	}
-	err = configStore.Set(data.Controller, config)
+	err = configStore.Set(data.Controller, config, true)
 	if err != nil {
 		log.Printf("Webui: Failed to update config for controller %s: %s\n", data.Controller, err.Error())
 		respondError(w, origValue, err)

@@ -12,6 +12,7 @@ type configSet map[string]*configSetItem
 type configStoreSetArgs struct {
 	controller string
 	config     controller.Config
+	enqueue    bool
 	resultChan chan error
 }
 
@@ -26,8 +27,9 @@ type configStoreGetArgs struct {
 }
 
 type ConfigStoreHook interface {
-	ConfigUpdated(controller string, config controller.Config) error
+	ConfigUpdated(controller string, config controller.Config, enqueue bool) error
 	GetConfigProperties(controller string) controller.ConfigProperties
+	SetConfigStore(configStore *ConfigStore)
 }
 
 type ConfigStore struct {

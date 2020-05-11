@@ -44,15 +44,15 @@ func main() {
 	s.AddController(&tempController)
 	s.AddController(&pumpController)
 
-	if err := c.Set(tempController.GetName(), tempControllerConfig); err != nil {
+	if err := c.Set(tempController.GetName(), tempControllerConfig, true); err != nil {
 		log.Fatalf("Failed to set initial config for PoolTempController: %s\n", err.Error())
 	}
-	if err := c.Set(pumpController.GetName(), pumpControllerConfig); err != nil {
+	if err := c.Set(pumpController.GetName(), pumpControllerConfig, true); err != nil {
 		log.Fatalf("Failed to set initial config for PoolPumpController: %s\n", err.Error())
 	}
 
 	wg.Add(1)
-	w := webui.New(&c, []io.Input{&tempSensor, &timer}, []io.Output{&pumpOutput, heaterOutput})
+	w := webui.New(c, []io.Input{&tempSensor, &timer}, []io.Output{&pumpOutput, heaterOutput})
 	go func() {
 		w.Run(stopChan)
 		wg.Done()

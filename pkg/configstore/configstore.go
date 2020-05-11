@@ -1,20 +1,24 @@
 package configstore
 
-import "github.com/libesz/poolmanager/pkg/controller"
+import (
+	"github.com/libesz/poolmanager/pkg/controller"
+)
 
-func New(hook ConfigStoreHook) ConfigStore {
-	return ConfigStore{
+func New(hook ConfigStoreHook) *ConfigStore {
+	result := &ConfigStore{
 		setChan:           make(chan configStoreSetArgs),
 		getChan:           make(chan configStoreGetArgs),
 		getKeysChan:       make(chan chan []string),
 		getPropertiesChan: make(chan configStoreGetPropertiesArgs),
 		hook:              hook,
 	}
+	hook.SetConfigStore(result)
+	return result
 }
 
-func (s *ConfigStore) Set(controller string, config controller.Config) error {
+func (s *ConfigStore) Set(controller string, config controller.Config, enqueue bool) error {
 	resultChan := make(chan error)
-	s.setChan <- configStoreSetArgs{controller: controller, config: config, resultChan: resultChan}
+	s.setChan <- configStoreSetArgs{controller: controller, config: config, resultChan: resultChan, enqueue: enqueue}
 	return <-resultChan
 }
 
@@ -54,7 +58,7 @@ func (s *ConfigStore) Run(stopChan chan struct{}) {
 		case getPropertiesRequest := <-s.getPropertiesChan:
 			getPropertiesRequest.resultChan <- s.hook.GetConfigProperties(getPropertiesRequest.name)
 		case setRequest := <-s.setChan:
-			err := s.hook.ConfigUpdated(setRequest.controller, setRequest.config)
+			err := s.hook.ConfigUpdated(setRequest.controller, setRequest.config, setRequest.enqueue)
 			if err == nil {
 				item := configSetItem{controller: setRequest.controller, config: setRequest.config}
 				item.config = setRequest.config
