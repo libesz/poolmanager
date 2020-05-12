@@ -13,14 +13,14 @@ import (
 )
 
 func main() {
-	pumpOutput := io.DummyOutput{Name_: "pumpOutput"}
-	timer := io.NewTimerOutput("pumpTimerOutput", &pumpOutput, time.Now)
+	pumpOutput := io.DummyOutput{Name_: "Pump state"}
+	timer := io.NewTimerOutput("Pump runtime hours today", &pumpOutput, time.Now)
 	pumpOrOutputMembers := io.NewOrOutput(&timer, 2)
 	pumpController := controller.NewPoolPumpController(&timer, &pumpOrOutputMembers[0], time.Now)
 	pumpControllerConfig := pumpController.GetDefaultConfig()
 
 	tempSensor := io.DummyTempSensor{Temperature: 26}
-	heaterOutput := &io.DummyOutput{Name_: "heater1"}
+	heaterOutput := &io.DummyOutput{Name_: "Heater"}
 	tempController := controller.NewPoolTempController(0.5, &tempSensor, heaterOutput, &pumpOrOutputMembers[1], time.Now)
 	tempControllerConfig := tempController.GetDefaultConfig()
 

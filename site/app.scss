@@ -42,27 +42,27 @@ html, body {
     margin-bottom: 0px;
 }
 
-.slider-value-wrapper, .password-input-wrapper {
+.slider-value-wrapper, .password-input-wrapper, .status-wrapper {
     margin-top: 0px;
     width:100%;
-    text-align:center;
     display: block
 }
 
-.password-input-text {
+.password-input-text, .status-text {
     float:left;
 //    border: 1px solid red;
     width: 70%;
 }
 
-.password-input-button {
+.password-input-button, .status-value {
     //    border: 1px solid green;
-        float:right;
+    float: right;
     //    width: 15%
 }
 
 .slider-value-div-min {
     float:left;
+    text-align:center;
 //    border: 1px solid red;
     width: 15%;
 }
@@ -75,6 +75,7 @@ html, body {
 
 .slider-value-div-max {
 //    border: 1px solid green;
+    text-align:center;
     float:right;
     width: 15%
 }
@@ -93,9 +94,17 @@ html, body {
     padding-left: 10px;
 }
 
+.status-value p {
+    margin-left: 16px;
+}
+
+.status-text p {
+    white-space: nowrap;
+}
+
 .dot {
-    height: 15px;
-    width: 15px;
+    height: 13px;
+    width: 13px;
     background-color: #bbb;
     border-radius: 50%;
     display: inline-block;

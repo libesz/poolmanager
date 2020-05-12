@@ -48,15 +48,33 @@
             <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
               <h2 class="mdc-typography--headline6">Status</h2>
               {{range $index, $input := .Inputs}}
-              <p>
-                {{$input.Type}} {{$input.Name}} {{$input.Value}} {{$input.Degree}}
-              </p>
+              <div class="status-wrapper">
+                <div class="status-text">
+                  <p>
+                    {{$input.Name}}
+                  </p>
+                </div>
+                <div class="status-value">
+                  <p>
+                    {{printf "%.2f" $input.Value}} {{$input.Degree}}
+                  </p>
+                </div>
+              </div>
               {{end}}
               {{range $index, $output := .Outputs}}
-              <p>
-                {{$output.Name}} <span class="dot{{if $output.Get}} green-dot{{end}}"></span>
-              </p>
-              {{end}}
+              <div class="status-wrapper">
+                <div class="status-text">
+                  <p>
+                    {{$output.Name}}
+                  </p>
+                </div>
+                <div class="status-value">
+                  <p>
+                    <span class="dot{{if $output.Get}} green-dot{{end}}"></span>
+                  </p>
+                </div>
+              </div>
+            {{end}}
             </div>
               {{ $ConfigValues := .ConfigValues }}
               {{range $controller, $configProperty := .ConfigProperties}}
