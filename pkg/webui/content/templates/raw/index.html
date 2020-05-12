@@ -54,7 +54,7 @@
               {{end}}
               {{range $index, $output := .Outputs}}
               <p>
-                {{$output.Name}} {{$output.Get}}
+                {{$output.Name}} <span class="dot{{if $output.Get}} green-dot{{end}}"></span>
               </p>
               {{end}}
             </div>
