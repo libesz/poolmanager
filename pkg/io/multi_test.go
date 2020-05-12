@@ -24,7 +24,7 @@ func TestMultiOut(t *testing.T) {
 
 func TestOr(t *testing.T) {
 	dummy := DummyOutput{Name_: "dummy"}
-	orMembers := NewOrOutput(&dummy, 2)
+	orMembers := NewOrOutput("dummy or", &dummy, 2)
 	if dummy.Value {
 		t.Fatal("Default state for dummy output shall be false")
 	}

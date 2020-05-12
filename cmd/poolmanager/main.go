@@ -13,9 +13,9 @@ import (
 )
 
 func main() {
-	pumpOutput := io.DummyOutput{Name_: "Pump state"}
+	pumpOutput := io.DummyOutput{Name_: "Pump"}
 	timer := io.NewTimerOutput("Pump runtime hours today", &pumpOutput, time.Now)
-	pumpOrOutputMembers := io.NewOrOutput(&timer, 2)
+	pumpOrOutputMembers := io.NewOrOutput("Pump", &timer, 2)
 	pumpController := controller.NewPoolPumpController(&timer, &pumpOrOutputMembers[0], time.Now)
 	pumpControllerConfig := pumpController.GetDefaultConfig()
 

@@ -54,7 +54,7 @@ func (o *OrOutput) setMemberState(i int, value bool) bool {
 	return o.realOutput.Set(false)
 }
 
-func NewOrOutput(realOutput Output, amount int) []OrOutputMember {
+func NewOrOutput(name string, realOutput Output, amount int) []OrOutputMember {
 	result := OrOutput{realOutput: realOutput}
 	result.memberStates = make(map[int]bool)
 	members := []OrOutputMember{}
