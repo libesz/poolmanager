@@ -16,7 +16,7 @@ func main() {
 	pumpOutput := io.DummyOutput{Name_: "pumpOutput"}
 	timer := io.NewTimerOutput("pumpTimerOutput", &pumpOutput, time.Now)
 	pumpOrOutputMembers := io.NewOrOutput(&timer, 2)
-	pumpController := controller.NewPoolPumpController(&timer, &pumpOrOutputMembers[0])
+	pumpController := controller.NewPoolPumpController(&timer, &pumpOrOutputMembers[0], time.Now)
 	pumpControllerConfig := pumpController.GetDefaultConfig()
 
 	tempSensor := io.DummyTempSensor{Temperature: 26}

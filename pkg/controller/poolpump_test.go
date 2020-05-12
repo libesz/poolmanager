@@ -2,6 +2,7 @@ package controller
 
 import (
 	"testing"
+	"time"
 )
 
 type MockTimer struct {
@@ -38,24 +39,91 @@ func (t *MockTimer) Name() string {
 
 func TestPumpDefaultConfig(t *testing.T) {
 	timer := &MockTimer{}
-	c := NewPoolPumpController(timer, timer)
+	c := NewPoolPumpController(timer, timer, tenpm)
 	config := c.GetDefaultConfig()
 	if err := c.ValidateConfig(config); err != nil {
 		t.Fatal("Default config validation error", err.Error())
 	}
 }
 
+func tenpm() time.Time {
+	return time.Date(2020, 04, 15, 22, 0, 0, 0, time.Local)
+}
+
+func eightpm() time.Time {
+	return time.Date(2020, 04, 15, 20, 0, 0, 0, time.Local)
+}
+
+func twelvepm() time.Time {
+	return time.Date(2020, 04, 16, 0, 0, 0, 0, time.Local)
+}
+
 func TestNormal(t *testing.T) {
 	timer := &MockTimer{}
-	c := NewPoolPumpController(timer, timer)
-	config := Config{Ranges: map[string]float64{configKeyRuntime: 1}}
-	c.Act(config)
+	c := NewPoolPumpController(timer, timer, eightpm)
+	config := Config{Ranges: map[string]float64{configKeyRuntime: 2}}
+	result := c.Act(config)
+	if timer.setCalledWith != false {
+		t.Error("Timer output not shall be started")
+	}
+	if len(result) != 1 {
+		t.Error("Result must contain one enqueue request")
+	}
+	if result[0].After.Hours() != 2.0 {
+		t.Errorf("Result must return two hours duration, returned: %s\n", result[0].After.String())
+	}
+
+	c.now = tenpm
+	result = c.Act(config)
 	if timer.setCalledWith != true {
 		t.Error("Timer output shall be started")
 	}
-	timer.nextValue = 3
-	c.Act(config)
+	if len(result) != 1 {
+		t.Error("Result must contain one enqueue request")
+	}
+	if result[0].After.Hours() != 2.0 {
+		t.Errorf("Result must return 2 hours duration, returned: %s\n", result[0].After.String())
+	}
+
+	timer.nextValue = 0
+	c.now = twelvepm
+	result = c.Act(config)
 	if timer.setCalledWith != false {
 		t.Error("Timer output shall be stopped")
+	}
+	if len(result) != 1 {
+		t.Error("Result must contain one enqueue request")
+	}
+	if result[0].After.Hours() != 22.0 {
+		t.Errorf("Result must return 22 hours duration, returned: %s\n", result[0].After.String())
+	}
+}
+
+func TestAlreadyOverThePlannedDuration(t *testing.T) {
+	timer := &MockTimer{}
+	timer.nextValue = 3
+	c := NewPoolPumpController(timer, timer, eightpm)
+	config := Config{Ranges: map[string]float64{configKeyRuntime: 2}}
+	result := c.Act(config)
+	if timer.setCalledWith != false {
+		t.Error("Timer output not shall be started")
+	}
+	if len(result) != 1 {
+		t.Error("Result must contain one enqueue request")
+	}
+	if result[0].After.Hours() != 26.0 {
+		t.Errorf("Result must return 26 hours duration, returned: %s\n", result[0].After.String())
+	}
+
+	c.now = tenpm
+	result = c.Act(config)
+	if timer.setCalledWith != false {
+		t.Error("Timer output not shall be started")
+	}
+	if len(result) != 1 {
+		t.Error("Result must contain one enqueue request")
+	}
+	if result[0].After.Hours() != 24.0 {
+		t.Errorf("Result must return 24 hours duration, returned: %s\n", result[0].After.String())
 	}
 }
