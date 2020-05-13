@@ -59,6 +59,11 @@ func (c *PoolPumpController) ValidateConfig(config Config) error {
 }
 
 func (c *PoolPumpController) Act(config Config) []EnqueueRequest {
+	if !config.Toggles[configKeyEnabled] {
+		log.Printf("PoolPumpController: controller is disabled, shutting down outputs\n")
+		c.pumpOutput.Set(false)
+		return []EnqueueRequest{}
+	}
 	now := c.now()
 	minutesFromPrevMidnightUntilNextStart := time.Duration(60*int(24-config.Ranges[configKeyRuntime])) * time.Minute
 	prevMidnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Local().Location())
