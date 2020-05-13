@@ -92,9 +92,9 @@ func (s *Scheduler) Run(stopChan chan struct{}) {
 			if ok {
 				close(queueItem)
 			} else {
-				log.Printf("Scheduler: no task enqueued for controller: %s\n", cancelRequest.controller)
+				log.Printf("Scheduler: no task found to cancel for controller: %s\n", cancelRequest.controller)
 			}
-			s.queue[cancelRequest.controller] = nil
+			delete(s.queue, cancelRequest.controller)
 			close(cancelRequest.result)
 		case <-stopChan:
 			return
