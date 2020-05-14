@@ -2,6 +2,7 @@ package io
 
 import (
 	"log"
+	"time"
 
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/conn/gpio/gpioreg"
@@ -37,6 +38,7 @@ func NewServo(name, pin, offDutyPercentage, onDutyPercentage string) *Servo {
 	}
 	result.onDutyPercentage = duty
 
+	result.state = true // force initial state change
 	result.Set(false)
 
 	return result
@@ -72,6 +74,7 @@ func (s *Servo) Get() bool {
 func (s *Servo) Halt() {
 	log.Println("Servo: teardown")
 	s.Set(false)
+	time.Sleep(2 * time.Second)
 	if err := s.pin.Halt(); err != nil {
 		log.Printf("Servo: teardown error: %s\n", err.Error())
 	}

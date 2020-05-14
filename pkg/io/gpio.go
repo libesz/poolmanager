@@ -9,12 +9,13 @@ import (
 )
 
 type GPIOOutput struct {
-	name  string
-	pin   gpio.PinIO
-	state bool
+	name      string
+	pin       gpio.PinIO
+	activeLow bool
+	state     bool
 }
 
-func NewGPIOOutput(name, pin string) *GPIOOutput {
+func NewGPIOOutput(name, pin string, activeLow bool) *GPIOOutput {
 	if _, err := host.Init(); err != nil {
 		log.Fatal(err)
 	}
@@ -22,8 +23,10 @@ func NewGPIOOutput(name, pin string) *GPIOOutput {
 	if p == nil {
 		log.Fatalf("GPIO: Failed to find %s\n", pin)
 	}
-	p.Out(gpio.Low)
-	return &GPIOOutput{name: name, pin: p}
+	result := &GPIOOutput{name: name, pin: p, activeLow: activeLow}
+	result.state = true // force initial state change
+	result.Set(false)
+	return result
 }
 
 func (g *GPIOOutput) Name() string {
@@ -37,7 +40,7 @@ func (g *GPIOOutput) Set(newState bool) bool {
 	}
 	log.Printf("GPIO %s set to: %t\n", g.name, newState)
 	g.state = newState
-	if g.state {
+	if (g.state && !g.activeLow) || (!g.state && g.activeLow) {
 		g.pin.Out(gpio.High)
 	} else {
 		g.pin.Out(gpio.Low)
