@@ -41,9 +41,6 @@ func main() {
 		cleanup(cleanTheseUp)
 	}()
 
-	dummy := io.Servo{}
-	cleanTheseUp = append(cleanTheseUp, &dummy)
-
 	pumpOutput := io.DummyOutput{Name_: "Pump"}
 	timer := io.NewTimerOutput("Pump runtime hours today", &pumpOutput, time.Now)
 	pumpOrOutputMembers := io.NewOrOutput("Pump", &timer, 2)
@@ -51,7 +48,9 @@ func main() {
 	pumpControllerConfig := pumpController.GetDefaultConfig()
 
 	tempSensor := io.DummyTempSensor{Temperature: 26}
-	heaterOutput := &io.DummyOutput{Name_: "Heater"}
+	//heaterOutput := &io.DummyOutput{Name_: "Heater"}
+	heaterOutput := io.NewServo("Heater", "GPIO3", "50%", "80%")
+	cleanTheseUp = append(cleanTheseUp, heaterOutput)
 	tempController := controller.NewPoolTempController(0.5, &tempSensor, heaterOutput, &pumpOrOutputMembers[1], time.Now)
 	tempControllerConfig := tempController.GetDefaultConfig()
 
