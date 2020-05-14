@@ -12,3 +12,7 @@ type Output interface {
 	Set(bool) bool
 	Get() bool
 }
+
+type Haltable interface {
+	Halt()
+}

@@ -2,7 +2,10 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/libesz/poolmanager/pkg/configstore"
@@ -12,7 +15,35 @@ import (
 	"github.com/libesz/poolmanager/pkg/webui"
 )
 
+func cleanup(cleanTheseUp []io.Haltable) {
+	log.Println("Main: cleaning up...")
+	for _, haltable := range cleanTheseUp {
+		haltable.Halt()
+	}
+}
+
 func main() {
+	sigs := make(chan os.Signal, 1)
+	signalReceived := make(chan bool, 1)
+
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigs
+		log.Println()
+		log.Println("Main: signal received:", sig)
+		signalReceived <- true
+	}()
+
+	var cleanTheseUp []io.Haltable
+
+	defer func() {
+		cleanup(cleanTheseUp)
+	}()
+
+	dummy := io.Servo{}
+	cleanTheseUp = append(cleanTheseUp, &dummy)
+
 	pumpOutput := io.DummyOutput{Name_: "Pump"}
 	timer := io.NewTimerOutput("Pump runtime hours today", &pumpOutput, time.Now)
 	pumpOrOutputMembers := io.NewOrOutput("Pump", &timer, 2)
@@ -45,10 +76,10 @@ func main() {
 	s.AddController(&pumpController)
 
 	if err := c.Set(tempController.GetName(), tempControllerConfig, true); err != nil {
-		log.Fatalf("Failed to set initial config for PoolTempController: %s\n", err.Error())
+		log.Fatalf("Main: failed to set initial config for PoolTempController: %s\n", err.Error())
 	}
 	if err := c.Set(pumpController.GetName(), pumpControllerConfig, true); err != nil {
-		log.Fatalf("Failed to set initial config for PoolPumpController: %s\n", err.Error())
+		log.Fatalf("Main: failed to set initial config for PoolPumpController: %s\n", err.Error())
 	}
 
 	wg.Add(1)
@@ -58,5 +89,8 @@ func main() {
 		wg.Done()
 	}()
 
+	<-signalReceived
+	close(stopChan)
 	wg.Wait()
+	log.Println("Main: Exiting")
 }

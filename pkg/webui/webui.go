@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -54,11 +55,16 @@ func New(configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.O
 }
 
 func (w *WebUI) Run(stopChan chan struct{}) {
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
-		log.Fatal(w.server.ListenAndServe())
+		err := w.server.ListenAndServe()
+		log.Printf("Webui: %s\n", err.Error())
+		wg.Done()
 	}()
 	<-stopChan
 	w.server.Close()
+	wg.Wait()
 }
 
 type PageData struct {
