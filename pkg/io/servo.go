@@ -37,6 +37,8 @@ func NewServo(name, pin, offDutyPercentage, onDutyPercentage string) *Servo {
 	}
 	result.onDutyPercentage = duty
 
+	result.Set(false)
+
 	return result
 }
 
