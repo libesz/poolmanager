@@ -46,7 +46,7 @@ func (t *TimerOutput) Value() float64 {
 
 func (t *TimerOutput) resetTotalIfDayChanged() {
 	if !t.lastStart.Round(24 * time.Hour).Equal(t.now().Round(24 * time.Hour)) {
-		log.Printf("Timer %s, date change. Total runtime yesterday: %f\n", t.name, t.runTimeTodayInHours)
+		log.Printf("Timer: %s, date change. Total runtime yesterday: %f\n", t.name, t.runTimeTodayInHours)
 		t.runTimeTodayInHours = 0
 		t.lastStart = t.now()
 	} else {
@@ -58,12 +58,12 @@ func (t *TimerOutput) Set(value bool) bool {
 	t.resetTotalIfDayChanged()
 	now := t.now()
 	if !t.lastValue && value {
-		log.Printf("Dummy timer %s starting\n", t.name)
+		log.Printf("Timer: %s starting\n", t.name)
 		t.lastStart = now
 	}
 	if t.lastValue && !value {
 		t.runTimeTodayInHours += now.Sub(t.lastStart).Hours()
-		log.Printf("Dummy timer %s stopped. total run today: %f\n", t.name, t.runTimeTodayInHours)
+		log.Printf("Timer: %s stopped. total run today: %f\n", t.name, t.runTimeTodayInHours)
 	}
 	t.lastValue = value
 	return t.output.Set(value)

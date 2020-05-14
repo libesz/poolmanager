@@ -5,7 +5,7 @@ import "testing"
 func TestMultiOut(t *testing.T) {
 	dummy1 := DummyOutput{Name_: "dummy1"}
 	dummy2 := DummyOutput{Name_: "dummy2"}
-	multi := NewMultiOutput("dummy", []Output{&dummy1, &dummy2})
+	multi := NewOutputDistributor("dummy", []Output{&dummy1, &dummy2})
 	multi.Set(true)
 	if !dummy1.Value {
 		t.Fatal("Multiplexer set to true. Dummy1 shall be also true")

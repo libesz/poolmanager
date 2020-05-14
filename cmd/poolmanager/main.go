@@ -47,7 +47,7 @@ func main() {
 	cleanTheseUp = append(cleanTheseUp, pumpOutput1)
 	pumpOutput2 := io.NewGPIOOutput("Pump2", "GPIO24", true)
 	cleanTheseUp = append(cleanTheseUp, pumpOutput2)
-	pumpOutput := io.NewMultiOutput("Pump", []io.Output{pumpOutput1, pumpOutput2})
+	pumpOutput := io.NewOutputDistributor("Pump", []io.Output{pumpOutput1, pumpOutput2})
 	timer := io.NewTimerOutput("Pump runtime hours today", pumpOutput, time.Now)
 	pumpOrOutputMembers := io.NewOrOutput("Pump", &timer, 2)
 	pumpController := controller.NewPoolPumpController(&timer, &pumpOrOutputMembers[0], time.Now)

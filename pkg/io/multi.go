@@ -2,25 +2,25 @@ package io
 
 import "strconv"
 
-type MultiOutput struct {
+type OutputDistributor struct {
 	name        string
 	realOutputs []Output
 	state       bool
 }
 
-func NewMultiOutput(name string, realOutputs []Output) *MultiOutput {
-	return &MultiOutput{name: name, realOutputs: realOutputs}
+func NewOutputDistributor(name string, realOutputs []Output) *OutputDistributor {
+	return &OutputDistributor{name: name, realOutputs: realOutputs}
 }
 
-func (m *MultiOutput) Name() string {
+func (m *OutputDistributor) Name() string {
 	return m.name
 }
 
-func (m *MultiOutput) Get() bool {
+func (m *OutputDistributor) Get() bool {
 	return m.state
 }
 
-func (m *MultiOutput) Set(value bool) bool {
+func (m *OutputDistributor) Set(value bool) bool {
 	if m.state == value {
 		return false
 	}
