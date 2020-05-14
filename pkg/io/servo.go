@@ -55,14 +55,14 @@ func (s *Servo) Set(newState bool) bool {
 	s.state = newState
 	var duty gpio.Duty
 	if s.state {
-		log.Println("Servo: set to ON")
+		log.Printf("Servo: %s set to ON\n", s.name)
 		duty = s.onDutyPercentage
 	} else {
-		log.Println("Servo: set to OFF")
+		log.Printf("Servo: %s set to OFF\n", s.name)
 		duty = s.offDutyPercentage
 	}
 	if err := s.pin.PWM(duty, 200*physic.Hertz); err != nil {
-		log.Printf("Servo: error setting new duty: %s", err.Error())
+		log.Printf("Servo: error setting new duty: %s\n", err.Error())
 	}
 	return true
 }
@@ -72,7 +72,7 @@ func (s *Servo) Get() bool {
 }
 
 func (s *Servo) Halt() {
-	log.Println("Servo: teardown")
+	log.Printf("Servo: %s teardown\n", s.name)
 	s.Set(false)
 	time.Sleep(2 * time.Second)
 	if err := s.pin.Halt(); err != nil {

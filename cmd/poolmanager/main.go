@@ -44,7 +44,9 @@ func main() {
 	//pumpOutput1 := io.DummyOutput{Name_: "Pump1"}
 	//pumpOutput2 := io.DummyOutput{Name_: "Pump2"}
 	pumpOutput1 := io.NewGPIOOutput("Pump1", "GPIO23", true)
-	pumpOutput2 := io.NewGPIOOutput("Pump1", "GPIO24", true)
+	cleanTheseUp = append(cleanTheseUp, pumpOutput1)
+	pumpOutput2 := io.NewGPIOOutput("Pump2", "GPIO24", true)
+	cleanTheseUp = append(cleanTheseUp, pumpOutput2)
 	pumpOutput := io.NewMultiOutput("Pump", []io.Output{pumpOutput1, pumpOutput2})
 	timer := io.NewTimerOutput("Pump runtime hours today", pumpOutput, time.Now)
 	pumpOrOutputMembers := io.NewOrOutput("Pump", &timer, 2)

@@ -35,10 +35,10 @@ func (g *GPIOOutput) Name() string {
 
 func (g *GPIOOutput) Set(newState bool) bool {
 	if g.state == newState {
-		log.Printf("GPIO %s unchanged: %t\n", g.name, newState)
+		log.Printf("GPIO: %s unchanged: %t\n", g.name, newState)
 		return false
 	}
-	log.Printf("GPIO %s set to: %t\n", g.name, newState)
+	log.Printf("GPIO: %s set to: %t\n", g.name, newState)
 	g.state = newState
 	if (g.state && !g.activeLow) || (!g.state && g.activeLow) {
 		g.pin.Out(gpio.High)
@@ -50,4 +50,9 @@ func (g *GPIOOutput) Set(newState bool) bool {
 
 func (d *GPIOOutput) Get() bool {
 	return d.state
+}
+
+func (d *GPIOOutput) Halt() {
+	log.Printf("GPIO: %s teardown", d.name)
+	d.Set(false)
 }
