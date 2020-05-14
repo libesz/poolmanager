@@ -5,25 +5,35 @@ import "strconv"
 type MultiOutput struct {
 	name        string
 	realOutputs []Output
+	state       bool
 }
 
-func NewMultiOutput(name string, realOutputs []Output) MultiOutput {
-	return MultiOutput{realOutputs: realOutputs}
+func NewMultiOutput(name string, realOutputs []Output) *MultiOutput {
+	return &MultiOutput{name: name, realOutputs: realOutputs}
 }
 
 func (m *MultiOutput) Name() string {
 	return m.name
 }
 
-func (m MultiOutput) Set(value bool) {
+func (m *MultiOutput) Get() bool {
+	return m.state
+}
+
+func (m *MultiOutput) Set(value bool) bool {
+	if m.state == value {
+		return false
+	}
+	m.state = value
 	for _, output := range m.realOutputs {
 		output.Set(value)
 	}
+	return true
 }
 
 type OrOutputMember struct {
 	id     int
-	master OrOutput
+	master *OrOutput
 }
 
 type OrOutput struct {
@@ -55,11 +65,11 @@ func (o *OrOutput) setMemberState(i int, value bool) bool {
 }
 
 func NewOrOutput(name string, realOutput Output, amount int) []OrOutputMember {
-	result := OrOutput{realOutput: realOutput}
-	result.memberStates = make(map[int]bool)
+	master := &OrOutput{name: name, realOutput: realOutput}
+	master.memberStates = make(map[int]bool)
 	members := []OrOutputMember{}
 	for i := 0; i < amount; i++ {
-		members = append(members, OrOutputMember{id: i, master: result})
+		members = append(members, OrOutputMember{id: i, master: master})
 	}
 	return members
 }
