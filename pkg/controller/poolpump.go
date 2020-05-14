@@ -28,7 +28,7 @@ func (c *PoolPumpController) GetConfigProperties() ConfigProperties {
 		Ranges: []ConfigRangeProperties{
 			{
 				Name: configKeyRuntime,
-				Min:  0,
+				Min:  1,
 				Max:  8,
 				Step: 1,
 			},
@@ -52,7 +52,7 @@ func (c *PoolPumpController) ValidateConfig(config Config) error {
 	if !ok {
 		return fmt.Errorf("Configured runtime missing")
 	}
-	if time < 0 || time > 8 {
+	if time < 1 || time > 8 {
 		return fmt.Errorf("Configured type is outside of the allowed range")
 	}
 	return nil
