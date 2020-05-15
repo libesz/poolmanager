@@ -79,6 +79,65 @@ func TestDefaultTempConfigPasses(t *testing.T) {
 	}
 }
 
+func TestTempDisabled(t *testing.T) {
+	heater := &MockHeater{}
+	pumpOutput := &MockPump{}
+	tempSensor := &MockTempSensor{}
+	c := PoolTempController{
+		heaterFactor: 0.5,
+		heaterOutput: heater,
+		pumpOutput:   pumpOutput,
+		tempSensor:   tempSensor,
+	}
+	config := c.GetDefaultConfig()
+	config.Toggles[configKeyEnabled] = false
+	result := c.Act(config)
+	if len(result) > 0 {
+		t.Fatalf("Controller is disabled. Act shall not result in any new task, returned %d", len(result))
+	}
+}
+
+func TestTempDisabledWhileActive(t *testing.T) {
+	heater := &MockHeater{}
+	pumpOutput := &MockPump{}
+	tempSensor := &MockTempSensor{Temperature: 20}
+	c := PoolTempController{
+		heaterFactor: 0.5,
+		heaterOutput: heater,
+		pumpOutput:   pumpOutput,
+		tempSensor:   tempSensor,
+		now: func() time.Time {
+			return time.Date(2020, 04, 15, 12, 0, 0, 0, time.Local)
+		},
+		pendingOperationReady: make(chan struct{}),
+	}
+	config := c.GetDefaultConfig()
+	config.Toggles[configKeyEnabled] = true
+	result := c.Act(config)
+	if len(result) != 2 {
+		t.Fatalf("Controller is enabled. Act shall result in two new tasks, returned %d", len(result))
+	}
+	result[1].Controller.Act(result[1].Config)
+
+	heater.setReturns = true
+	config.Toggles[configKeyEnabled] = false
+	result = c.Act(config)
+	if len(result) != 1 {
+		t.Fatalf("Controller is disabled while heater is on. Act shall result in one new task, but returned %d", len(result))
+	}
+	if result[0].Controller.GetName() != "delayedOperation" {
+		t.Fatalf("Controller is disabled while heater is on. Act shall result in new delayedOperation task, returned %s", result[0].Controller.GetName())
+	}
+
+	result = c.Act(config)
+	if len(result) != 1 {
+		t.Fatalf("Controller is disabled, but there is a delayedOperation in progress. Act shall result in one new task, but returned %d", len(result))
+	}
+	if result[0].Controller.GetName() != "Temperature controller" {
+		t.Fatalf("Controller is disabled, but there is a delayedOperation in progress. Act shall result in new Temperature controller task, returned %s", result[0].Controller.GetName())
+	}
+}
+
 func TestTemp(t *testing.T) {
 	heater := &MockHeater{}
 	pumpOutput := &MockPump{}

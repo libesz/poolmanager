@@ -13,3 +13,6 @@ build: prepare-site
 
 build-pi-zero: prepare-site
 	env GOOS=linux GOARCH=arm GOARM=5 go build cmd/poolmanager/main.go
+
+test:
+	go test -race -timeout 60s -covermode=atomic -coverprofile=cover.out ./...
