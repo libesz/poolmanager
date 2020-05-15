@@ -2,23 +2,36 @@ package io
 
 import "testing"
 
-func TestMultiOut(t *testing.T) {
+func TestDistributor(t *testing.T) {
 	dummy1 := DummyOutput{Name_: "dummy1"}
 	dummy2 := DummyOutput{Name_: "dummy2"}
 	multi := NewOutputDistributor("dummy", []Output{&dummy1, &dummy2})
-	multi.Set(true)
+	setResult := multi.Set(true)
 	if !dummy1.Value {
-		t.Fatal("Multiplexer set to true. Dummy1 shall be also true")
+		t.Fatal("Distributor set to true. Dummy1 shall be also true")
 	}
 	if !dummy2.Value {
-		t.Fatal("Multiplexer set to true. Dummy2 shall be also true")
+		t.Fatal("Distributor set to true. Dummy2 shall be also true")
 	}
-	multi.Set(false)
+	if !setResult {
+		t.Fatal("Set result shall indicate the operation changed the output or not. Now it changed")
+	}
+	if !multi.Get() {
+		t.Fatal("Distributor shall be on now")
+	}
+
+	setResult = multi.Set(false)
 	if dummy1.Value {
-		t.Fatal("Multiplexer set to false. Dummy1 shall be also false")
+		t.Fatal("Distributor set to false. Dummy1 shall be also false")
 	}
 	if dummy2.Value {
-		t.Fatal("Multiplexer set to false. Dummy2 shall be also false")
+		t.Fatal("Distributor set to false. Dummy2 shall be also false")
+	}
+	if !setResult {
+		t.Fatal("Set result shall indicate the operation changed the output or not. Now it changed")
+	}
+	if multi.Get() {
+		t.Fatal("Distributor shall be on now")
 	}
 }
 
@@ -31,6 +44,9 @@ func TestOr(t *testing.T) {
 	orMembers[0].Set(true)
 	if !dummy.Value {
 		t.Fatal("One OR member is true. Dummy output shall be true")
+	}
+	if !(orMembers[0].Get() == orMembers[1].Get() == true) {
+		t.Fatal("Both OR members shall get the value of the final output, which now should be true")
 	}
 	orMembers[1].Set(true)
 	if !dummy.Value {
