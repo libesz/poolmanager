@@ -20,7 +20,6 @@ import (
 )
 
 var parsedTemplates *template.Template
-var store = sessions.NewCookieStore([]byte("temp"))
 
 func New(configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output) WebUI {
 	s := sessions.NewCookieStore([]byte("temp"))
@@ -171,13 +170,13 @@ func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter
 	}
 	w.WriteHeader(http.StatusOK)
 	u := JsonResponse{Error: "OK"}
-	json.NewEncoder(w).Encode(u)
+	_ = json.NewEncoder(w).Encode(u)
 }
 
 func respondError(w http.ResponseWriter, origValue interface{}, err error) {
 	w.WriteHeader(http.StatusConflict)
 	u := JsonResponse{Error: err.Error(), OrigValue: origValue}
-	json.NewEncoder(w).Encode(u)
+	_ = json.NewEncoder(w).Encode(u)
 }
 
 type LoginRequest struct {
@@ -203,7 +202,7 @@ func loginPostHandler(s *sessions.CookieStore, w http.ResponseWriter, r *http.Re
 	log.Printf("Webui: user authorized\n")
 	session, _ := s.Get(r, "session")
 	session.Values["logged-in"] = true
-	session.Save(r, w)
+	_ = session.Save(r, w)
 	w.WriteHeader(http.StatusAccepted)
 }
 
@@ -216,6 +215,6 @@ func logoutGetHandler(s *sessions.CookieStore, w http.ResponseWriter, r *http.Re
 		return
 	}
 	session.Values["logged-in"] = false
-	session.Save(r, w)
+	_ = session.Save(r, w)
 	http.Redirect(w, r, "/", http.StatusFound)
 }

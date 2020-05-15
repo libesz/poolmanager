@@ -53,8 +53,6 @@ func (t *TimerOutput) resetTotalIfDayChanged() {
 		log.Printf("Timer: %s, date change. Total runtime yesterday: %f\n", t.name, t.runTimeTodayInHours)
 		t.runTimeTodayInHours = 0
 		t.lastStart = t.now()
-	} else {
-		//log.Printf("Timer %s, no date cycle\n", t.name)
 	}
 }
 

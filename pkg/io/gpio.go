@@ -41,9 +41,9 @@ func (g *GPIOOutput) Set(newState bool) bool {
 	log.Printf("GPIO: %s set to: %t\n", g.name, newState)
 	g.state = newState
 	if (g.state && !g.activeLow) || (!g.state && g.activeLow) {
-		g.pin.Out(gpio.High)
+		_ = g.pin.Out(gpio.High)
 	} else {
-		g.pin.Out(gpio.Low)
+		_ = g.pin.Out(gpio.Low)
 	}
 	return true
 }

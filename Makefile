@@ -16,3 +16,8 @@ build-pi-zero: prepare-site
 
 test:
 	go test -race -timeout 60s -covermode=atomic -coverprofile=cover.out ./...
+
+lint:
+	golangci-lint run
+
+validate-code: lint test
