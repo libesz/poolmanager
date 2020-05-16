@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/kelseyhightower/envconfig"
 	"github.com/libesz/poolmanager/pkg/configstore"
 	"github.com/libesz/poolmanager/pkg/controller"
 	"github.com/libesz/poolmanager/pkg/io"
@@ -20,6 +21,16 @@ func cleanup(cleanTheseUp []io.Haltable) {
 	for _, haltable := range cleanTheseUp {
 		haltable.Halt()
 	}
+}
+
+type StaticConfig struct {
+	ListenOn      string
+	Password      string
+	PumpGPIO1     string
+	PumpGPIO2     string
+	HeaterPWM     string
+	HeaterOffDuty string
+	HeaterOnDuty  string
 }
 
 func main() {
@@ -35,17 +46,21 @@ func main() {
 		signalReceived <- true
 	}()
 
-	var cleanTheseUp []io.Haltable
+	var staticConfig StaticConfig
+	if err := envconfig.Process("poolmanager", &staticConfig); err != nil {
+		log.Fatal(err.Error())
+	}
 
+	var cleanTheseUp []io.Haltable
 	defer func() {
 		cleanup(cleanTheseUp)
 	}()
 
 	//pumpOutput1 := io.DummyOutput{Name_: "Pump1"}
 	//pumpOutput2 := io.DummyOutput{Name_: "Pump2"}
-	pumpOutput1 := io.NewGPIOOutput("Pump1", "GPIO23", true)
+	pumpOutput1 := io.NewGPIOOutput("Pump1", staticConfig.PumpGPIO1, true)
 	cleanTheseUp = append(cleanTheseUp, pumpOutput1)
-	pumpOutput2 := io.NewGPIOOutput("Pump2", "GPIO24", true)
+	pumpOutput2 := io.NewGPIOOutput("Pump2", staticConfig.PumpGPIO2, true)
 	cleanTheseUp = append(cleanTheseUp, pumpOutput2)
 	pumpOutput := io.NewOutputDistributor("Pump", []io.Output{pumpOutput1, pumpOutput2})
 	timer := io.NewTimerOutput("Pump runtime hours today", pumpOutput, time.Now)
@@ -55,7 +70,7 @@ func main() {
 
 	tempSensor := io.DummyTempSensor{Temperature: 26}
 	//heaterOutput := &io.DummyOutput{Name_: "Heater"}
-	heaterOutput := io.NewServo("Heater", "GPIO3", "50%", "80%")
+	heaterOutput := io.NewServo("Heater", staticConfig.HeaterPWM, staticConfig.HeaterOffDuty, staticConfig.HeaterOnDuty)
 	cleanTheseUp = append(cleanTheseUp, heaterOutput)
 	tempController := controller.NewPoolTempController(0.5, &tempSensor, heaterOutput, &pumpOrOutputMembers[1], time.Now)
 	tempControllerConfig := tempController.GetDefaultConfig()
@@ -88,7 +103,7 @@ func main() {
 	}
 
 	wg.Add(1)
-	w := webui.New(c, []io.Input{&tempSensor, &timer}, []io.Output{pumpOutput, heaterOutput})
+	w := webui.New(staticConfig.ListenOn, staticConfig.Password, c, []io.Input{&tempSensor, &timer}, []io.Output{pumpOutput, heaterOutput})
 	go func() {
 		w.Run(stopChan)
 		wg.Done()

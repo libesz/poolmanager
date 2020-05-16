@@ -21,7 +21,7 @@ import (
 
 var parsedTemplates *template.Template
 
-func New(configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output) WebUI {
+func New(listenOn, password string, configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output) WebUI {
 	s := sessions.NewCookieStore([]byte("temp"))
 	r := mux.NewRouter()
 	parsedTemplates = template.Must(vfstemplate.ParseGlob(templates.Content, nil, "*.html"))
@@ -37,7 +37,7 @@ func New(configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.O
 	}).Methods("POST")
 
 	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		loginPostHandler(s, w, r)
+		loginPostHandler(password, s, w, r)
 	}).Methods("POST")
 
 	r.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +46,7 @@ func New(configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.O
 
 	server := &http.Server{
 		Handler:      r,
-		Addr:         ":8000",
+		Addr:         listenOn,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -183,7 +183,7 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-func loginPostHandler(s *sessions.CookieStore, w http.ResponseWriter, r *http.Request) {
+func loginPostHandler(password string, s *sessions.CookieStore, w http.ResponseWriter, r *http.Request) {
 	log.Printf("Webui: requested login\n")
 	decoder := json.NewDecoder(r.Body)
 	var data LoginRequest
@@ -194,7 +194,7 @@ func loginPostHandler(s *sessions.CookieStore, w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if data.Password != "dummy" {
+	if data.Password != password {
 		log.Printf("Webui: user unauthorized\n")
 		w.WriteHeader(http.StatusUnauthorized)
 		return

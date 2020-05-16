@@ -1,0 +1,15 @@
+[Unit]
+Description=Pool manager
+
+[Service]
+Environment="POOLMANAGER_LISTENON=:8000"
+Environment="POOLMANAGER_PASSWORD=dummy"
+Environment="POOLMANAGER_PUMPGPIO1=GPIO23"
+Environment="POOLMANAGER_PUMPGPIO2=GPIO24"
+Environment="POOLMANAGER_HEATERPWM=GPIO3"
+Environment="POOLMANAGER_HEATEROFFDUTY=50%"
+Environment="POOLMANAGER_HEATERONDUTY=80%"
+ExecStart=/home/pi/poolmanager/main
+
+[Install]
+WantedBy=multi-user.target
