@@ -46,11 +46,15 @@ func (t *TimerOutput) Value() float64 {
 
 func (t *TimerOutput) resetTotalIfDayChanged() {
 	lastStartMidnight := time.Date(t.lastStart.Year(), t.lastStart.Month(), t.lastStart.Day(), 0, 0, 0, 0, t.lastStart.Local().Location())
-	nowTS := t.now()
-	nowMidnight := time.Date(nowTS.Year(), nowTS.Month(), nowTS.Day(), 0, 0, 0, 0, nowTS.Local().Location())
+	now := t.now()
+	nowMidnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Local().Location())
 
 	if !lastStartMidnight.Equal(nowMidnight) {
-		log.Printf("Timer: %s, date change. Total runtime yesterday: %f\n", t.name, t.runTimeTodayInHours)
+		total := t.runTimeTodayInHours
+		if t.lastValue {
+			total += now.Sub(t.lastStart).Hours()
+		}
+		log.Printf("Timer: %s, date change. Total runtime yesterday: %f\n", t.name, total)
 		t.runTimeTodayInHours = 0
 		t.lastStart = t.now()
 	}
