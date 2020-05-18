@@ -28,7 +28,7 @@ type StaticConfig struct {
 	Password      string
 	PumpGPIO1     string
 	PumpGPIO2     string
-	HeaterPWM     string
+	HeaterGPIO    string
 	HeaterOffDuty string
 	HeaterOnDuty  string
 }
@@ -70,7 +70,7 @@ func main() {
 
 	tempSensor := io.DummyTempSensor{Temperature: 26}
 	//heaterOutput := &io.DummyOutput{Name_: "Heater"}
-	heaterOutput := io.NewServo("Heater", staticConfig.HeaterPWM, staticConfig.HeaterOffDuty, staticConfig.HeaterOnDuty)
+	heaterOutput := io.NewGPIOOutput("Heater", staticConfig.HeaterGPIO, true)
 	cleanTheseUp = append(cleanTheseUp, heaterOutput)
 	tempController := controller.NewPoolTempController(0.5, &tempSensor, heaterOutput, &pumpOrOutputMembers[1], time.Now)
 	tempControllerConfig := tempController.GetDefaultConfig()

@@ -10,6 +10,9 @@ import (
 	"periph.io/x/periph/host"
 )
 
+/* This package is not in a usable condition. Periph PWM handling is not stable
+   and according to the maintainers, need a rewrite */
+
 type Servo struct {
 	name                                string
 	pin                                 gpio.PinIO
@@ -61,7 +64,7 @@ func (s *Servo) Set(newState bool) bool {
 		log.Printf("Servo: %s set to OFF\n", s.name)
 		duty = s.offDutyPercentage
 	}
-	if err := s.pin.PWM(duty, 200*physic.Hertz); err != nil {
+	if err := s.pin.PWM(duty, 5*physic.Hertz); err != nil {
 		log.Printf("Servo: error setting new duty: %s\n", err.Error())
 	}
 	return true
@@ -78,4 +81,5 @@ func (s *Servo) Halt() {
 	if err := s.pin.Halt(); err != nil {
 		log.Printf("Servo: teardown error: %s\n", err.Error())
 	}
+	_ = s.pin.Out(gpio.High)
 }
