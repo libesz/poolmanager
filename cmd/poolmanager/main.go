@@ -24,13 +24,12 @@ func cleanup(cleanTheseUp []io.Haltable) {
 }
 
 type StaticConfig struct {
-	ListenOn      string
-	Password      string
-	PumpGPIO1     string
-	PumpGPIO2     string
-	HeaterGPIO    string
-	HeaterOffDuty string
-	HeaterOnDuty  string
+	ListenOn     string
+	Password     string
+	PumpGPIO1    string
+	PumpGPIO2    string
+	HeaterGPIO   string
+	TempSensorId string
 }
 
 func main() {
@@ -68,11 +67,12 @@ func main() {
 	pumpController := controller.NewPoolPumpController(&timer, &pumpOrOutputMembers[0], time.Now)
 	pumpControllerConfig := pumpController.GetDefaultConfig()
 
-	tempSensor := io.DummyTempSensor{Temperature: 26}
+	//tempSensor := io.DummyTempSensor{Temperature: 26}
+	tempSensor := io.NewOneWireTemperatureInput("Pool temperature", staticConfig.TempSensorId)
 	//heaterOutput := &io.DummyOutput{Name_: "Heater"}
 	heaterOutput := io.NewGPIOOutput("Heater", staticConfig.HeaterGPIO, true)
 	cleanTheseUp = append(cleanTheseUp, heaterOutput)
-	tempController := controller.NewPoolTempController(0.5, &tempSensor, heaterOutput, &pumpOrOutputMembers[1], time.Now)
+	tempController := controller.NewPoolTempController(0.5, tempSensor, heaterOutput, &pumpOrOutputMembers[1], time.Now)
 	tempControllerConfig := tempController.GetDefaultConfig()
 
 	stopChan := make(chan struct{})
@@ -103,7 +103,7 @@ func main() {
 	}
 
 	wg.Add(1)
-	w := webui.New(staticConfig.ListenOn, staticConfig.Password, c, []io.Input{&tempSensor, &timer}, []io.Output{pumpOutput, heaterOutput})
+	w := webui.New(staticConfig.ListenOn, staticConfig.Password, c, []io.Input{tempSensor, &timer}, []io.Output{pumpOutput, heaterOutput})
 	go func() {
 		w.Run(stopChan)
 		wg.Done()
