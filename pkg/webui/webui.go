@@ -2,6 +2,7 @@ package webui
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -137,27 +138,39 @@ func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter
 	w.Header().Set("Content-Type", "application/json")
 
 	config := configStore.Get(data.Controller)
-	origValue := ""
+	origValueString := ""
 	switch data.Type {
 	case "range":
 		log.Printf("Webui: identified numeric config\n")
 		convertedValue, err := strconv.ParseFloat(data.Value, 64)
 		if err != nil {
 			log.Printf("Webui: Failed to parse requested numeric config change for controller %s key %s value %s: %s\n", data.Controller, data.Key, data.Value, err.Error())
-			respondError(w, origValue, err)
+			respondError(w, origValueString, err)
 			return
 		}
-		origValue = strconv.FormatFloat(config.Ranges[data.Key], 'E', -1, 64)
+		origValue, ok := config.Ranges[data.Key]
+		if !ok {
+			log.Printf("Webui: Non-existing numeric config key for controller %s key %s value %s\n", data.Controller, data.Key, data.Value)
+			respondError(w, origValueString, fmt.Errorf("Non-existing config key"))
+			return
+		}
+		origValueString = strconv.FormatFloat(origValue, 'E', -1, 64)
 		config.Ranges[data.Key] = convertedValue
 	case "toggle":
 		log.Printf("Webui: identified boolean config\n")
 		convertedValue, err := strconv.ParseBool(data.Value)
 		if err != nil {
 			log.Printf("Webui: Failed to parse requested boolean config change for controller %s key %s value %s: %s\n", data.Controller, data.Key, data.Value, err.Error())
-			respondError(w, origValue, err)
+			respondError(w, origValueString, err)
 			return
 		}
-		origValue = strconv.FormatBool(config.Toggles[data.Key])
+		origValue, ok := config.Toggles[data.Key]
+		if !ok {
+			log.Printf("Webui: Non-existing boolean config key for controller %s key %s value %s\n", data.Controller, data.Key, data.Value)
+			respondError(w, origValueString, fmt.Errorf("Non-existing config key"))
+			return
+		}
+		origValueString = strconv.FormatBool(origValue)
 		config.Toggles[data.Key] = convertedValue
 	default:
 		log.Printf("Webui: unknown type: %s\n", data.Type)
@@ -165,7 +178,7 @@ func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter
 	err = configStore.Set(data.Controller, config, true)
 	if err != nil {
 		log.Printf("Webui: Failed to update config for controller %s: %s\n", data.Controller, err.Error())
-		respondError(w, origValue, err)
+		respondError(w, origValueString, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
