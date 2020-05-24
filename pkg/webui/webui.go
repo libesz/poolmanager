@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/libesz/poolmanager/pkg/configstore"
 	"github.com/libesz/poolmanager/pkg/controller"
@@ -23,7 +24,7 @@ import (
 var parsedTemplates *template.Template
 
 func New(listenOn, password string, configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output) WebUI {
-	s := sessions.NewCookieStore([]byte("temp"))
+	s := sessions.NewCookieStore(securecookie.GenerateRandomKey(32))
 	r := mux.NewRouter()
 	parsedTemplates = template.Must(vfstemplate.ParseGlob(templates.Content, nil, "*.html"))
 
