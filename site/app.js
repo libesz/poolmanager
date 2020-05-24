@@ -24,7 +24,9 @@ if (pageFunction == "login") {
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4) {
                 if (xhr.status !== 202) {
-                    snackbar.labelText = "Error: Unauthorized";
+                    var json = JSON.parse(xhr.responseText);
+                    //console.log("Error: " + json.error);
+                    snackbar.labelText = "Error: " + json.error;
                     snackbar.open()
                     return
                 }

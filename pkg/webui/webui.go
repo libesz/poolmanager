@@ -35,7 +35,7 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 	}).Methods("GET")
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		homePostHandler(configStore, w, r)
+		homePostHandler(s, configStore, w, r)
 	}).Methods("POST")
 
 	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
@@ -125,7 +125,19 @@ type JsonResponse struct {
 	OrigValue interface{} `json:"origValue"`
 }
 
-func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
+func homePostHandler(s *sessions.CookieStore, configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	session, _ := s.Get(r, "session")
+	loggedIn, ok := session.Values["logged-in"].(bool)
+	if !ok || !loggedIn {
+		log.Printf("Webui: unauthorized config change request\n")
+		w.WriteHeader(http.StatusUnauthorized)
+		u := JsonResponse{Error: "Unauthorized", OrigValue: nil}
+		_ = json.NewEncoder(w).Encode(u)
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	var data JsonRequest
 	err := decoder.Decode(&data)
@@ -135,8 +147,6 @@ func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter
 		return
 	}
 	log.Printf("Webui: requested config change: %+v\n", data)
-
-	w.Header().Set("Content-Type", "application/json")
 
 	config := configStore.Get(data.Controller)
 	origValueString := ""
@@ -198,19 +208,25 @@ type LoginRequest struct {
 }
 
 func loginPostHandler(password string, s *sessions.CookieStore, w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	log.Printf("Webui: requested login\n")
 	decoder := json.NewDecoder(r.Body)
 	var data LoginRequest
 	err := decoder.Decode(&data)
 	if err != nil {
-		log.Printf("Webui: decode error on request: %s\n", err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("Webui: decode error on login request: %s\n", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		u := JsonResponse{Error: err.Error(), OrigValue: nil}
+		_ = json.NewEncoder(w).Encode(u)
 		return
 	}
 
 	if data.Password != password {
 		log.Printf("Webui: user unauthorized\n")
 		w.WriteHeader(http.StatusUnauthorized)
+		u := JsonResponse{Error: "Unauthorized", OrigValue: nil}
+		_ = json.NewEncoder(w).Encode(u)
 		return
 	}
 	log.Printf("Webui: user authorized\n")
