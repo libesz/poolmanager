@@ -3,6 +3,8 @@ package controller
 import (
 	"testing"
 	"time"
+
+	"github.com/libesz/poolmanager/pkg/io"
 )
 
 type MockHeater struct {
@@ -117,7 +119,7 @@ func TestTempDisabledWhileActive(t *testing.T) {
 	if len(result) != 2 {
 		t.Fatalf("Controller is enabled. Act shall result in two new tasks, returned %d", len(result))
 	}
-	result[1].Controller.Act(result[1].Config)
+	result[0].Controller.Act(result[0].Config)
 
 	heater.setReturns = true
 	config.Toggles[configKeyEnabled] = false
@@ -179,10 +181,10 @@ func TestTemp(t *testing.T) {
 		t.Fatal("Pump output shall be started")
 	}
 
-	if results[1].Controller.GetName() != "delayedOperation" {
+	if results[0].Controller.GetName() != "delayedOperation" {
 		t.Fatalf("Controller shall return a delayed operation as well, returned %s", results[1].Controller.GetName())
 	}
-	results[1].Controller.Act(results[1].Config)
+	results[0].Controller.Act(results[0].Config)
 	if heater.calledWith != true {
 		t.Fatal("Heater output shall be started now by the delayed operation, as the pump already running")
 	}
@@ -200,10 +202,10 @@ func TestTemp(t *testing.T) {
 		t.Fatal("Pump output shall be started")
 	}
 
-	if results[1].Controller.GetName() != "delayedOperation" {
+	if results[0].Controller.GetName() != "delayedOperation" {
 		t.Fatalf("Controller shall return a delayed operation as well, returned %s", results[1].Controller.GetName())
 	}
-	results[1].Controller.Act(results[1].Config)
+	results[0].Controller.Act(results[0].Config)
 	if heater.calledWith != true {
 		t.Fatal("Heater output shall be started now by the delayed operation, as the pump already running")
 	}
@@ -222,10 +224,10 @@ func TestTemp(t *testing.T) {
 	if heater.calledWith != false {
 		t.Fatal("Heater output shall be stopped")
 	}
-	if results[1].Controller.GetName() != "delayedOperation" {
+	if results[0].Controller.GetName() != "delayedOperation" {
 		t.Fatalf("Controller shall return a delayed operation as well, returned %s", results[1].Controller.GetName())
 	}
-	results[1].Controller.Act(results[1].Config)
+	results[0].Controller.Act(results[0].Config)
 	if pumpOutput.calledWith != false {
 		t.Fatal("Heater output shall be started now by the delayed operation, as the pump already running")
 	}
@@ -239,4 +241,34 @@ func TestTemp(t *testing.T) {
 	if heater.calledWith != false {
 		t.Fatal("Heater output shall be stopped")
 	}
+}
+
+func TestTemperatureError(t *testing.T) {
+	heater := &MockHeater{}
+	pumpOutput := &MockPump{}
+	tempSensor := &MockTempSensor{}
+	c := PoolTempController{
+		heaterFactor:          0.5,
+		heaterOutput:          heater,
+		pumpOutput:            pumpOutput,
+		tempSensor:            tempSensor,
+		pendingOperationReady: make(chan struct{}),
+	}
+	config := Config{Toggles: map[string]bool{configKeyEnabled: true}, Ranges: map[string]float64{configKeyTemp: 28.0, configKeyStart: 10, configKeyEnd: 13}}
+
+	tempSensor.Temperature = io.InputError
+	c.now = func() time.Time {
+		return time.Date(2020, 04, 15, 2, 0, 0, 0, time.Local)
+	}
+	results := c.Act(config)
+	if heater.calledWith != false {
+		t.Fatal("Heater output shall be stopped")
+	}
+	if len(results) != 1 {
+		t.Fatalf("Controller shall return one controller to enqueue, returned %d", len(results))
+	}
+	if results[0].Controller.GetName() != "Temperature controller" {
+		t.Fatalf("Controller shall return itself, returned %s", results[1].Controller.GetName())
+	}
+
 }
