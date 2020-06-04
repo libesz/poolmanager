@@ -13,6 +13,7 @@ func NewPoolTempController(
 	tempSensor io.Input,
 	heaterOutput io.Output,
 	pumpOutput io.Output,
+	pollDuration time.Duration,
 	now func() time.Time) PoolTempController {
 	return PoolTempController{
 		heaterFactor:          heaterFactor,
@@ -20,6 +21,7 @@ func NewPoolTempController(
 		heaterOutput:          heaterOutput,
 		pumpOutput:            pumpOutput,
 		now:                   now,
+		pollDuration:          pollDuration,
 		pendingOperationReady: make(chan struct{}, 1),
 	}
 }
@@ -31,6 +33,7 @@ type PoolTempController struct {
 	pumpOutput            io.Output
 	pendingOperation      bool
 	pendingOperationReady chan struct{}
+	pollDuration          time.Duration
 	now                   func() time.Time
 }
 
@@ -174,7 +177,7 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 			c.pendingOperationReady = make(chan struct{}, 1)
 		default:
 			log.Printf("PoolTempController: pending operation is in progress")
-			return []EnqueueRequest{{Controller: c, Config: config, After: 5 * time.Second}}
+			return []EnqueueRequest{{Controller: c, Config: config, After: c.pollDuration}}
 		}
 	}
 	if !config.Toggles[configKeyEnabled] {
@@ -185,7 +188,7 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 	currentTemp := c.tempSensor.Value()
 	if currentTemp == io.InputError {
 		log.Printf("PoolTempController: temperature value is not available, shutting down outputs for safety\n")
-		return append(c.shutdown(), EnqueueRequest{Controller: c, Config: config, After: 5 * time.Second})
+		return append(c.shutdown(), EnqueueRequest{Controller: c, Config: config, After: c.pollDuration})
 	}
 	now := c.now()
 	nextStart := time.Date(now.Year(), now.Month(), now.Day(), int(config.Ranges[configKeyStart]), 0, 0, 0, now.Local().Location())
@@ -203,10 +206,10 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 	calculatedDesiredTemp := desiredTemp - thisManyHoursUntilNextStart*c.heaterFactor
 	if calculatedDesiredTemp >= currentTemp {
 		log.Printf("PoolTempController: hours until the next active period: %f. Calculated desired temperature: %f, need more heat\n", thisManyHoursUntilNextStart, calculatedDesiredTemp)
-		return append(c.startup(), EnqueueRequest{Controller: c, Config: config, After: 5 * time.Second})
+		return append(c.startup(), EnqueueRequest{Controller: c, Config: config, After: c.pollDuration})
 	}
 	log.Printf("PoolTempController: the temperature is already fine\n")
-	return append(c.shutdown(), EnqueueRequest{Controller: c, Config: config, After: 5 * time.Second})
+	return append(c.shutdown(), EnqueueRequest{Controller: c, Config: config, After: c.pollDuration})
 }
 
 func (c *PoolTempController) GetName() string {

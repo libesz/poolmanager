@@ -73,7 +73,7 @@ func main() {
 	//heaterOutput := &io.DummyOutput{Name_: "Heater"}
 	heaterOutput := io.NewGPIOOutput("Heater", staticConfig.HeaterGPIO, true)
 	cleanTheseUp = append(cleanTheseUp, heaterOutput)
-	tempController := controller.NewPoolTempController(0.5, cachedTempSensor, heaterOutput, &pumpOrOutputMembers[1], time.Now)
+	tempController := controller.NewPoolTempController(0.5, cachedTempSensor, heaterOutput, &pumpOrOutputMembers[1], 5*time.Second, time.Now)
 	tempControllerConfig := tempController.GetDefaultConfig()
 
 	stopChan := make(chan struct{})
