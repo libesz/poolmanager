@@ -32,17 +32,17 @@ func (o *OneWireTemperatureInput) Value() float64 {
 	raw, err := ioutil.ReadFile(o.fullPath)
 	if err != nil {
 		log.Printf("OneWireTemperatureInput: Failed to open onewire file: %s, error: %s", o.fullPath, err.Error())
-		return 0.0
+		return InputError
 	}
 	rawMatched := regexp.MustCompile(` t=([0-9]{5})`).FindSubmatch(raw)
 	if rawMatched == nil || len(rawMatched) != 2 {
 		log.Printf("OneWireTemperatureInput: Failed to parse valid value from onewire file: %s", o.fullPath)
-		return 0.0
+		return InputError
 	}
 	converted, err := strconv.Atoi(string(rawMatched[1]))
 	if err != nil {
 		log.Printf("OneWireTemperatureInput: Failed to convert string %s to int from onewire file: %s, error: %s", rawMatched[1], o.fullPath, err.Error())
-		return 0.0
+		return InputError
 	}
 	final := float64(converted) / 1000
 

@@ -72,6 +72,7 @@ type PageData struct {
 	ConfigProperties map[string]controller.ConfigProperties
 	ConfigValues     map[string]controller.Config
 	Inputs           []io.Input
+	InputErrorConst  float64
 	Outputs          []io.Output
 	Function         string
 	Debug            string
@@ -104,6 +105,7 @@ func homeHandler(s *sessions.CookieStore, configStore *configstore.ConfigStore, 
 			data.ConfigValues[controllerName] = configStore.Get(controllerName)
 		}
 		data.Inputs = inputs
+		data.InputErrorConst = io.InputError
 		data.Outputs = outputs
 	}
 

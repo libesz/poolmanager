@@ -29,7 +29,7 @@ func (i *CacheInput) Degree() string {
 
 func (i *CacheInput) Value() float64 {
 	now := i.now()
-	if now.Sub(i.lastRead) > i.cacheTime {
+	if (now.Sub(i.lastRead) > i.cacheTime) || (i.lastValue == InputError) {
 		i.lastRead = now
 		i.lastValue = i.realInput.Value()
 	}
