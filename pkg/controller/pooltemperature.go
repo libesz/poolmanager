@@ -184,7 +184,6 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 		log.Printf("PoolTempController: controller is disabled, shutting down outputs\n")
 		return c.shutdown()
 	}
-	desiredTemp := config.Ranges[configKeyTemp]
 	currentTemp := c.tempSensor.Value()
 	if currentTemp == io.InputError {
 		log.Printf("PoolTempController: temperature value is not available, shutting down outputs for safety\n")
@@ -203,12 +202,12 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 		}
 	}
 	thisManyHoursUntilNextStart = nextStart.Sub(now).Hours()
-	calculatedDesiredTemp := desiredTemp - thisManyHoursUntilNextStart*c.heaterFactor
+	calculatedDesiredTemp := config.Ranges[configKeyTemp] - thisManyHoursUntilNextStart*c.heaterFactor
 	if calculatedDesiredTemp >= currentTemp {
-		log.Printf("PoolTempController: hours until the next active period: %f. Calculated desired temperature: %f, need more heat\n", thisManyHoursUntilNextStart, calculatedDesiredTemp)
+		log.Printf("PoolTempController: hours back: %.2f. Actual temperature: %.2f %s. Calculated desired temperature: %.2f %s. Need more heat.\n", thisManyHoursUntilNextStart, currentTemp, c.tempSensor.Degree(), calculatedDesiredTemp, c.tempSensor.Degree())
 		return append(c.startup(), EnqueueRequest{Controller: c, Config: config, After: c.pollDuration})
 	}
-	log.Printf("PoolTempController: the temperature is already fine\n")
+	log.Printf("PoolTempController: the actual temperature is already fine: %.2f %s\n", currentTemp, c.tempSensor.Degree())
 	return append(c.shutdown(), EnqueueRequest{Controller: c, Config: config, After: c.pollDuration})
 }
 

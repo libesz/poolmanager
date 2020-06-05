@@ -33,6 +33,8 @@ type StaticConfig struct {
 }
 
 func main() {
+	log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
+
 	sigs := make(chan os.Signal, 1)
 	signalReceived := make(chan bool, 1)
 
