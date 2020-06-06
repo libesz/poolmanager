@@ -65,7 +65,7 @@ func (s *Scheduler) Run(stopChan chan struct{}) {
 	for {
 		select {
 		case task := <-s.taskChan:
-			log.Printf("Scheduler: executing controller: %s\n", task.controller.GetName())
+			//log.Printf("Scheduler: executing controller: %s\n", task.controller.GetName())
 			reEnqueAfterSet := task.controller.Act(task.config)
 			for _, reEnqueAfter := range reEnqueAfterSet {
 				cancelItemChan := make(chan struct{})

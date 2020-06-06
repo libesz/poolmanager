@@ -35,7 +35,7 @@ func (g *GPIOOutput) Name() string {
 
 func (g *GPIOOutput) Set(newState bool) bool {
 	if g.state == newState {
-		log.Printf("GPIO: %s unchanged: %t\n", g.name, newState)
+		//log.Printf("GPIO: %s unchanged: %t\n", g.name, newState)
 		return false
 	}
 	log.Printf("GPIO: %s set to: %t\n", g.name, newState)
