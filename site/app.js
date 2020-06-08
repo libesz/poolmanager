@@ -11,26 +11,29 @@ const topAppBarElement = document.querySelector('.mdc-top-app-bar');
 const topAppBar = new MDCTopAppBar(topAppBarElement);
 const snackbar = new MDCSnackbar(document.querySelector('.mdc-snackbar'));
 
-if (pageFunction == "login") {
+if (document.cookie == "" || document.cookie == "token=") {
+    if (window.location.pathname != "/login") {
+        window.location.pathname = "/login"
+    }
     const passwordField = new MDCTextField(document.querySelector('.mdc-text-field'));
     const passwordInput = document.querySelector('.password-input-field')
     const passwordButton = document.querySelector('.password-button');
     const mDCRipple = new MDCRipple(passwordButton)
     const sendPassword = function() {
         var xhr = new XMLHttpRequest();
-        var url = window.location.href+'login';
-        xhr.open("POST", url, true);
+        xhr.open("POST", window.location.href, true);
         xhr.setRequestHeader("Content-Type", "application/json");
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4) {
+                var json = JSON.parse(xhr.responseText);
                 if (xhr.status !== 202) {
-                    var json = JSON.parse(xhr.responseText);
                     //console.log("Error: " + json.error);
                     snackbar.labelText = "Error: " + json.error;
                     snackbar.open()
                     return
                 }
-                location.reload();
+                document.cookie = "token="+json.token+";samesite=lax";
+                window.location.pathname = "/"
             }
         };
         var data = JSON.stringify({"password": passwordInput.value});
@@ -46,7 +49,7 @@ if (pageFunction == "login") {
 
 if (pageFunction == "default") {
     const logoutButton = document.querySelector('.logout-button');
-    logoutButton.addEventListener('click', () => {location.href = '/logout'})
+    logoutButton.addEventListener('click', () => {document.cookie = "token=;samesite=lax"; location.reload()})
 
     const switches = document.querySelectorAll('.mdc-switch');
     switches.forEach(s => {

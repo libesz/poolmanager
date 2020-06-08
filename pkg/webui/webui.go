@@ -10,41 +10,64 @@ import (
 	"sync"
 	"time"
 
+	jwtmiddleware "github.com/auth0/go-jwt-middleware"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/securecookie"
-	"github.com/gorilla/sessions"
 	"github.com/libesz/poolmanager/pkg/configstore"
 	"github.com/libesz/poolmanager/pkg/controller"
 	"github.com/libesz/poolmanager/pkg/io"
 	"github.com/libesz/poolmanager/pkg/webui/content/static"
 	"github.com/libesz/poolmanager/pkg/webui/content/templates"
 	"github.com/shurcooL/httpfs/html/vfstemplate"
+	"github.com/urfave/negroni"
 )
 
 var parsedTemplates *template.Template
+var mySigningKey = []byte("captainjacksparrowsayshi")
 
 func New(listenOn, password string, configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output) WebUI {
-	s := sessions.NewCookieStore(securecookie.GenerateRandomKey(32))
 	r := mux.NewRouter()
 	parsedTemplates = template.Must(vfstemplate.ParseGlob(templates.Content, nil, "*.html"))
+
+	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
+		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+			return mySigningKey, nil
+		},
+		// When set, the middleware verifies that tokens are signed with the specific signing algorithm
+		// If the signing method is not constant the ValidationKeyGetter callback can be used to implement additional checks
+		// Important to avoid security issues described here: https://auth0.com/blog/2015/03/31/critical-vulnerabilities-in-json-web-token-libraries/
+		SigningMethod: jwt.SigningMethodHS256,
+	})
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(static.Content)))
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		homeHandler(s, configStore, inputs, outputs, w, r)
+		homeHandler(configStore, inputs, outputs, w, r)
 	}).Methods("GET")
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		homePostHandler(s, configStore, w, r)
+		homePostHandler(configStore, w, r)
 	}).Methods("POST")
 
 	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		loginPostHandler(password, s, w, r)
+		loginPostHandler(password, w, r)
 	}).Methods("POST")
 
-	r.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
-		logoutGetHandler(s, w, r)
+	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		loginGetHandler(w, r)
 	}).Methods("GET")
+
+	r.Handle("/api/ping", negroni.New(
+		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
+		negroni.Wrap(myHandler),
+	))
+
+	r.Handle("/api/status", negroni.New(
+		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
+		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			apiStatusHandler(configStore, inputs, outputs, w, r)
+		})),
+	))
 
 	server := &http.Server{
 		Handler:      r,
@@ -52,7 +75,42 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-	return WebUI{server: server, sessions: s}
+	return WebUI{server: server, jwt: jwtMiddleware}
+}
+
+var myHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value("user")
+	fmt.Fprintf(w, "This is an authenticated request")
+	fmt.Fprintf(w, "Claim content:\n")
+	for k, v := range user.(*jwt.Token).Claims.(jwt.MapClaims) {
+		fmt.Fprintf(w, "%s :\t%#v\n", k, v)
+	}
+})
+
+type ApiStatusResponse struct {
+	Inputs          map[string]float64 `json:"inputs"`
+	InputErrorConst float64            `json:"inputerrorconst"`
+	Outputs         map[string]bool    `json:"outputs"`
+}
+
+func apiStatusHandler(configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output, w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	data := ApiStatusResponse{
+		Inputs:          make(map[string]float64),
+		InputErrorConst: io.InputError,
+		Outputs:         make(map[string]bool),
+	}
+	for _, item := range inputs {
+		data.Inputs[item.Name()] = item.Value()
+	}
+
+	for _, item := range outputs {
+		data.Outputs[item.Name()] = item.Get()
+	}
+
+	log.Printf("Webui: rendering apiStatusHandler page with data: %+v\n", data)
+	_ = json.NewEncoder(w).Encode(data)
 }
 
 func (w *WebUI) Run(stopChan chan struct{}) {
@@ -78,19 +136,10 @@ type PageData struct {
 	Debug            string
 }
 
-func homeHandler(s *sessions.CookieStore, configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output, w http.ResponseWriter, r *http.Request) {
+func homeHandler(configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
-	session, _ := s.Get(r, "session")
-	loggedIn, ok := session.Values["logged-in"].(bool)
-	if !ok {
-		loggedIn = false
-	}
-
 	function := "default"
-	if !loggedIn {
-		function = "login"
-	}
 
 	data := PageData{
 		ConfigProperties: make(map[string]controller.ConfigProperties),
@@ -98,18 +147,31 @@ func homeHandler(s *sessions.CookieStore, configStore *configstore.ConfigStore, 
 		Function:         function,
 	}
 
-	if loggedIn {
-		controllers := configStore.GetKeys()
-		for _, controllerName := range controllers {
-			data.ConfigProperties[controllerName] = configStore.GetProperties(controllerName)
-			data.ConfigValues[controllerName] = configStore.Get(controllerName)
-		}
-		data.Inputs = inputs
-		data.InputErrorConst = io.InputError
-		data.Outputs = outputs
+	controllers := configStore.GetKeys()
+	for _, controllerName := range controllers {
+		data.ConfigProperties[controllerName] = configStore.GetProperties(controllerName)
+		data.ConfigValues[controllerName] = configStore.Get(controllerName)
 	}
+	data.Inputs = inputs
+	data.InputErrorConst = io.InputError
+	data.Outputs = outputs
 
 	log.Printf("Webui: rendering page with data: %+v\n", data)
+	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
+		log.Println(err.Error())
+	}
+}
+
+func loginGetHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+
+	function := "login"
+
+	data := PageData{
+		Function: function,
+	}
+
+	log.Printf("Webui: rendering login page with data: %+v\n", data)
 	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
 		log.Println(err.Error())
 	}
@@ -124,21 +186,12 @@ type JsonRequest struct {
 
 type JsonResponse struct {
 	Error     string      `json:"error"`
+	Token     string      `json:"token"`
 	OrigValue interface{} `json:"origValue"`
 }
 
-func homePostHandler(s *sessions.CookieStore, configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
+func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
-	session, _ := s.Get(r, "session")
-	loggedIn, ok := session.Values["logged-in"].(bool)
-	if !ok || !loggedIn {
-		log.Printf("Webui: unauthorized config change request\n")
-		w.WriteHeader(http.StatusUnauthorized)
-		u := JsonResponse{Error: "Unauthorized", OrigValue: nil}
-		_ = json.NewEncoder(w).Encode(u)
-		return
-	}
 
 	decoder := json.NewDecoder(r.Body)
 	var data JsonRequest
@@ -209,7 +262,24 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-func loginPostHandler(password string, s *sessions.CookieStore, w http.ResponseWriter, r *http.Request) {
+func generateJWT() (string, error) {
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	claims := token.Claims.(jwt.MapClaims)
+
+	claims["authorized"] = true
+
+	tokenString, err := token.SignedString(mySigningKey)
+
+	if err != nil {
+		fmt.Errorf("Something Went Wrong: %s", err.Error())
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+func loginPostHandler(password string, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	log.Printf("Webui: requested login\n")
@@ -232,21 +302,8 @@ func loginPostHandler(password string, s *sessions.CookieStore, w http.ResponseW
 		return
 	}
 	log.Printf("Webui: user authorized\n")
-	session, _ := s.Get(r, "session")
-	session.Values["logged-in"] = true
-	_ = session.Save(r, w)
+	tokenString, _ := generateJWT()
 	w.WriteHeader(http.StatusAccepted)
-}
-
-func logoutGetHandler(s *sessions.CookieStore, w http.ResponseWriter, r *http.Request) {
-	log.Printf("Webui: requested logout\n")
-	session, _ := s.Get(r, "session")
-	if loggedIn, ok := session.Values["logged-in"].(bool); !ok || !loggedIn {
-		log.Printf("Webui: not logged in while requesting logout\n")
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	session.Values["logged-in"] = false
-	_ = session.Save(r, w)
-	http.Redirect(w, r, "/", http.StatusFound)
+	u := JsonResponse{Token: tokenString}
+	_ = json.NewEncoder(w).Encode(u)
 }
