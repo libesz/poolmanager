@@ -80,17 +80,20 @@ if (pageFunction == "login") {
 
     function updateConfigItem(controller, type, key, value, cbOnError) {
         var xhr = new XMLHttpRequest();
-        var url = window.location.href;
+        var url = window.location.href+"api/config";
         xhr.open("POST", url, true);
         xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.setRequestHeader("Authorization", "Bearer " + getCookie("token"))
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4) {
-                if (xhr.status !== 200) {
-                var json = JSON.parse(xhr.responseText);
-                //console.log("Error: " + json.error);
-                snackbar.labelText = "Error: " + json.error;
-                snackbar.open();
-                cbOnError(json.origValue)
+                if (xhr.status === 401) {
+                    window.location.pathname = "/login";
+                } else if (xhr.status !== 200) {
+                    var json = JSON.parse(xhr.responseText);
+                    //console.log("Error: " + json.error);
+                    snackbar.labelText = "Error: " + json.error;
+                    snackbar.open();
+                    cbOnError(json.origValue)
                 } else {
                     updateStatus();
                 }

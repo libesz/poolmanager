@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -40,16 +41,23 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err string) {
 			//log.Println("ErrorHandler: ", err)
 			w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0")
-			http.Redirect(w, r, "/login", 301)
+			if !strings.Contains(r.URL.Path, "api/") {
+				http.Redirect(w, r, "/login", 301)
+				return
+			}
+			w.WriteHeader(http.StatusUnauthorized)
 		},
 		Extractor: func(r *http.Request) (string, error) {
-			tokenFromCookie, err := r.Cookie("token")
-			if err != nil {
-				//log.Println("Extractor: passing to FromAuthHeader due to error:", err.Error())
-				return jwtmiddleware.FromAuthHeader(r)
+			if !strings.Contains(r.URL.Path, "api/") {
+				tokenFromCookie, err := r.Cookie("token")
+				if err != nil {
+					return "", fmt.Errorf("Web client shall use cookie tokens")
+				}
+				//log.Println("Extractor: returning token with cookie value:", tokenFromCookie.Value)
+				return tokenFromCookie.Value, nil
 			}
-			//log.Println("Extractor: returning token with cookie value:", tokenFromCookie.Value)
-			return tokenFromCookie.Value, nil
+			//log.Println("Extractor: passing to FromAuthHeader")
+			return jwtmiddleware.FromAuthHeader(r)
 		},
 	})
 
@@ -62,9 +70,12 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 		})),
 	)).Methods("GET")
 
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		homePostHandler(configStore, w, r)
-	}).Methods("POST")
+	r.Handle("/api/config", negroni.New(
+		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
+		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			configPostHandler(configStore, w, r)
+		})),
+	)).Methods("POST")
 
 	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		loginPostHandler(password, w, r)
@@ -84,7 +95,7 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			apiStatusHandler(configStore, inputs, outputs, w, r)
 		})),
-	))
+	)).Methods("GET")
 
 	server := &http.Server{
 		Handler:      r,
@@ -209,7 +220,7 @@ type JsonResponse struct {
 	OrigValue interface{} `json:"origValue"`
 }
 
-func homePostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
+func configPostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	decoder := json.NewDecoder(r.Body)
