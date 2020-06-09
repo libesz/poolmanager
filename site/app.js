@@ -11,7 +11,7 @@ const topAppBarElement = document.querySelector('.mdc-top-app-bar');
 const topAppBar = new MDCTopAppBar(topAppBarElement);
 const snackbar = new MDCSnackbar(document.querySelector('.mdc-snackbar'));
 
-if (document.cookie == "" || document.cookie == "token=") {
+if (getCookie("token") == null) {
     if (window.location.pathname != "/login") {
         window.location.pathname = "/login"
     } else {
@@ -49,6 +49,7 @@ if (document.cookie == "" || document.cookie == "token=") {
 } else if (pageFunction == "default") {
     const logoutButton = document.querySelector('.logout-button');
     logoutButton.addEventListener('click', () => {document.cookie = "token=;samesite=lax"; location.reload()})
+    var statusUpdater = setInterval(updateStatus, 6000);
 
     const switches = document.querySelectorAll('.mdc-switch');
     switches.forEach(s => {
@@ -87,16 +88,112 @@ if (document.cookie == "" || document.cookie == "token=") {
         xhr.open("POST", url, true);
         xhr.setRequestHeader("Content-Type", "application/json");
         xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4 && xhr.status !== 200) {
+            if (xhr.readyState === 4) {
+                if (xhr.status !== 200) {
                 var json = JSON.parse(xhr.responseText);
                 //console.log("Error: " + json.error);
                 snackbar.labelText = "Error: " + json.error;
-                snackbar.open()
+                snackbar.open();
                 cbOnError(json.origValue)
+                } else {
+                    updateStatus();
+                }
             }
         };
         var data = JSON.stringify({"controller": controller, "type": type, "key": key, "value": value.toString()});
         xhr.send(data);
     }
 
+    function updateStatus() {
+        var xhr = new XMLHttpRequest();
+        var url = window.location.href+"api/status";
+        xhr.open("GET", url, true);
+        //xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.setRequestHeader("Authorization", "Bearer " + getCookie("token"))
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                var json = JSON.parse(xhr.responseText);
+                if (xhr.status !== 200) {
+                    //console.log("Error: " + json.error);
+                    snackbar.labelText = "Error: " + json.error;
+                    snackbar.open()
+                    cbOnError(json.origValue)
+                } else {
+                    //console.log(json)
+                    //var updateDiv = document.getElementsByClassName("status-div-to-update")[0]
+                    var updateDiv = document.createElement("div")
+                    updateDiv.className = "mdc-layout-grid__cell mdc-layout-grid__cell--span-4 status-div-to-update"
+                    var statusHeader = document.createElement("h2")
+                    statusHeader.className = "mdc-typography--headline6"
+                    statusHeader.innerText = "Status"
+                    updateDiv.appendChild(statusHeader)
+                    Object.keys(json.inputs).forEach(function(name){
+                        //console.log(name + '=' + json.inputs[name]);
+                        var wrapperDiv = document.createElement("div")
+                        wrapperDiv.setAttribute("class", "status-wrapper")
+
+                        var textDiv = document.createElement("div")
+                        textDiv.className = "status-text"
+                        var text = document.createElement("p")
+                        text.innerText = name
+                        textDiv.appendChild(text)
+                        wrapperDiv.appendChild(textDiv)
+
+                        var valueDiv = document.createElement("div")
+                        valueDiv.className = "status-value"
+                        var value = document.createElement("p")
+                        value.innerText = json.inputs[name]
+                        valueDiv.appendChild(value)
+                        wrapperDiv.appendChild(valueDiv)
+
+                        updateDiv.appendChild(wrapperDiv)
+                    });
+                    Object.keys(json.outputs).forEach(function(name){
+                        //console.log(name + '=' + json.outputs[name]);
+                        var wrapperDiv = document.createElement("div")
+                        wrapperDiv.setAttribute("class", "status-wrapper")
+
+                        var textDiv = document.createElement("div")
+                        textDiv.className = "status-text"
+                        var text = document.createElement("p")
+                        text.innerText = name
+                        textDiv.appendChild(text)
+                        wrapperDiv.appendChild(textDiv)
+
+                        var valueDiv = document.createElement("div")
+                        valueDiv.className = "status-value"
+                        var value = document.createElement("p")
+                        var valueSpan = document.createElement("span")
+                        valueSpan.className = "dot"
+                        if(json.outputs[name]) {
+                            valueSpan.className += " green-dot"
+                        }
+                        value.appendChild(valueSpan)
+                        valueDiv.appendChild(value)
+                        wrapperDiv.appendChild(valueDiv)
+
+                        updateDiv.appendChild(wrapperDiv)
+                    });
+                    document.getElementsByClassName("status-div-to-update")[0].replaceWith(updateDiv)
+                }
+            }
+        };
+        xhr.send();
+    }
+}
+
+function getCookie(name) {
+    var cookieArr = document.cookie.split(";");
+    
+    for(var i = 0; i < cookieArr.length; i++) {
+        var cookiePair = cookieArr[i].split("=");
+        if(name == cookiePair[0].trim()) {
+            var decoded = decodeURIComponent(cookiePair[1]);
+            if (decoded.length == 0) {
+                return null;
+            }
+            return decoded;
+        }
+    }
+    return null;
 }

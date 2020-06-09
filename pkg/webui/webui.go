@@ -75,7 +75,7 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-	return WebUI{server: server, jwt: jwtMiddleware}
+	return WebUI{server: server}
 }
 
 var myHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -88,21 +88,23 @@ var myHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 })
 
 type ApiStatusResponse struct {
-	Inputs          map[string]float64 `json:"inputs"`
-	InputErrorConst float64            `json:"inputerrorconst"`
-	Outputs         map[string]bool    `json:"outputs"`
+	Inputs  map[string]string `json:"inputs"`
+	Outputs map[string]bool   `json:"outputs"`
 }
 
 func apiStatusHandler(configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	data := ApiStatusResponse{
-		Inputs:          make(map[string]float64),
-		InputErrorConst: io.InputError,
-		Outputs:         make(map[string]bool),
+		Inputs:  make(map[string]string),
+		Outputs: make(map[string]bool),
 	}
 	for _, item := range inputs {
-		data.Inputs[item.Name()] = item.Value()
+		if item.Value() == io.InputError {
+			data.Inputs[item.Name()] = "N/A"
+		} else {
+			data.Inputs[item.Name()] = fmt.Sprintf("%.2f %s", item.Value(), item.Degree())
+		}
 	}
 
 	for _, item := range outputs {

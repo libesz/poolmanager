@@ -45,7 +45,7 @@
             </div>
           {{end}}
           {{if eq .Function "default"}}
-            <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4">
+            <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-4 status-div-to-update">
               <h2 class="mdc-typography--headline6">Status</h2>
               {{ $InputErrorConst := .InputErrorConst }}
               {{range $index, $input := .Inputs}}
@@ -75,7 +75,7 @@
                   </p>
                 </div>
               </div>
-            {{end}}
+              {{end}}
             </div>
               {{ $ConfigValues := .ConfigValues }}
               {{range $controller, $configProperty := .ConfigProperties}}
