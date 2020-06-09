@@ -37,13 +37,30 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 		// If the signing method is not constant the ValidationKeyGetter callback can be used to implement additional checks
 		// Important to avoid security issues described here: https://auth0.com/blog/2015/03/31/critical-vulnerabilities-in-json-web-token-libraries/
 		SigningMethod: jwt.SigningMethodHS256,
+		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err string) {
+			//log.Println("ErrorHandler: ", err)
+			w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0")
+			http.Redirect(w, r, "/login", 301)
+		},
+		Extractor: func(r *http.Request) (string, error) {
+			tokenFromCookie, err := r.Cookie("token")
+			if err != nil {
+				//log.Println("Extractor: passing to FromAuthHeader due to error:", err.Error())
+				return jwtmiddleware.FromAuthHeader(r)
+			}
+			//log.Println("Extractor: returning token with cookie value:", tokenFromCookie.Value)
+			return tokenFromCookie.Value, nil
+		},
 	})
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(static.Content)))
 
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		homeHandler(configStore, inputs, outputs, w, r)
-	}).Methods("GET")
+	r.Handle("/", negroni.New(
+		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
+		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			homeHandler(configStore, inputs, outputs, w, r)
+		})),
+	)).Methods("GET")
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		homePostHandler(configStore, w, r)
@@ -59,7 +76,7 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 
 	r.Handle("/api/ping", negroni.New(
 		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
-		negroni.Wrap(myHandler),
+		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { myHandler(w, r) })),
 	))
 
 	r.Handle("/api/status", negroni.New(

@@ -11,41 +11,37 @@ const topAppBarElement = document.querySelector('.mdc-top-app-bar');
 const topAppBar = new MDCTopAppBar(topAppBarElement);
 const snackbar = new MDCSnackbar(document.querySelector('.mdc-snackbar'));
 
-if (getCookie("token") == null) {
-    if (window.location.pathname != "/login") {
-        window.location.pathname = "/login"
-    } else {
-        const passwordField = new MDCTextField(document.querySelector('.mdc-text-field'));
-        const passwordInput = document.querySelector('.password-input-field')
-        const passwordButton = document.querySelector('.password-button');
-        const mDCRipple = new MDCRipple(passwordButton)
-        const sendPassword = function() {
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", window.location.href, true);
-            xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4) {
-                    var json = JSON.parse(xhr.responseText);
-                    if (xhr.status !== 202) {
-                        //console.log("Error: " + json.error);
-                        snackbar.labelText = "Error: " + json.error;
-                        snackbar.open()
-                        return
-                    }
-                    document.cookie = "token="+json.token+";samesite=lax";
-                    window.location.pathname = "/"
+if (pageFunction == "login") {
+    const passwordField = new MDCTextField(document.querySelector('.mdc-text-field'));
+    const passwordInput = document.querySelector('.password-input-field')
+    const passwordButton = document.querySelector('.password-button');
+    const mDCRipple = new MDCRipple(passwordButton)
+    const sendPassword = function() {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", window.location.href, true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                var json = JSON.parse(xhr.responseText);
+                if (xhr.status !== 202) {
+                    //console.log("Error: " + json.error);
+                    snackbar.labelText = "Error: " + json.error;
+                    snackbar.open()
+                    return
                 }
-            };
-            var data = JSON.stringify({"password": passwordInput.value});
-            xhr.send(data);
-        }
-        passwordInput.addEventListener("keyup", function(event) {
-            if (event.key === "Enter") {
-                sendPassword()
+                document.cookie = "token="+encodeURIComponent(json.token)+";samesite=lax";
+                window.location.pathname = "/"
             }
-        });
-        passwordButton.addEventListener('click', sendPassword)
+        };
+        var data = JSON.stringify({"password": passwordInput.value});
+        xhr.send(data);
     }
+    passwordInput.addEventListener("keyup", function(event) {
+        if (event.key === "Enter") {
+            sendPassword()
+        }
+    });
+    passwordButton.addEventListener('click', sendPassword)
 } else if (pageFunction == "default") {
     const logoutButton = document.querySelector('.logout-button');
     logoutButton.addEventListener('click', () => {document.cookie = "token=;samesite=lax"; location.reload()})
