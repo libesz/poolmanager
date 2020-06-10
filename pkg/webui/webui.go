@@ -13,6 +13,7 @@ import (
 
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/libesz/poolmanager/pkg/configstore"
 	"github.com/libesz/poolmanager/pkg/controller"
@@ -24,22 +25,22 @@ import (
 )
 
 var parsedTemplates *template.Template
-var mySigningKey = []byte("captainjacksparrowsayshi")
 
 func New(listenOn, password string, configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output) WebUI {
 	r := mux.NewRouter()
-	parsedTemplates = template.Must(vfstemplate.ParseGlob(templates.Content, nil, "*.html"))
 
+	parsedTemplates = template.Must(vfstemplate.ParseGlob(templates.Content, nil, "*.html"))
+	signingKey := []byte(uuid.New().String())
 	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
-			return mySigningKey, nil
+			return signingKey, nil
 		},
 		// When set, the middleware verifies that tokens are signed with the specific signing algorithm
 		// If the signing method is not constant the ValidationKeyGetter callback can be used to implement additional checks
 		// Important to avoid security issues described here: https://auth0.com/blog/2015/03/31/critical-vulnerabilities-in-json-web-token-libraries/
 		SigningMethod: jwt.SigningMethodHS256,
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err string) {
-			//log.Println("ErrorHandler: ", err)
+			log.Println("WebUI: unauthorized request:", err)
 			w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0")
 			if !strings.Contains(r.URL.Path, "api/") {
 				http.Redirect(w, r, "/login", 301)
@@ -70,20 +71,20 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 		})),
 	)).Methods("GET")
 
+	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		loginPostHandler(signingKey, password, w, r)
+	}).Methods("POST")
+
+	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		loginGetHandler(w, r)
+	}).Methods("GET")
+
 	r.Handle("/api/config", negroni.New(
 		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
 		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			configPostHandler(configStore, w, r)
 		})),
 	)).Methods("POST")
-
-	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		loginPostHandler(password, w, r)
-	}).Methods("POST")
-
-	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		loginGetHandler(w, r)
-	}).Methods("GET")
 
 	r.Handle("/api/ping", negroni.New(
 		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
@@ -115,6 +116,68 @@ var myHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	}
 })
 
+func (w *WebUI) Run(stopChan chan struct{}) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		err := w.server.ListenAndServe()
+		log.Printf("Webui: %s\n", err.Error())
+		wg.Done()
+	}()
+	<-stopChan
+	w.server.Close()
+	wg.Wait()
+}
+
+type PageData struct {
+	ConfigProperties map[string]controller.ConfigProperties
+	ConfigValues     map[string]controller.Config
+	Inputs           []io.Input
+	InputErrorConst  float64
+	Outputs          []io.Output
+	Function         string
+	Debug            string
+}
+
+func homeHandler(configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output, w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+
+	data := PageData{
+		ConfigProperties: make(map[string]controller.ConfigProperties),
+		ConfigValues:     make(map[string]controller.Config),
+		Function:         "default",
+		Inputs:           inputs,
+		InputErrorConst:  io.InputError,
+		Outputs:          outputs,
+	}
+
+	controllers := configStore.GetKeys()
+	for _, controllerName := range controllers {
+		data.ConfigProperties[controllerName] = configStore.GetProperties(controllerName)
+		data.ConfigValues[controllerName] = configStore.Get(controllerName)
+	}
+
+	log.Printf("Webui: rendering page with data: %+v\n", data)
+	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
+		log.Println(err.Error())
+	}
+}
+
+func loginGetHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+
+	function := "login"
+
+	data := PageData{
+		Function: function,
+	}
+
+	log.Printf("Webui: rendering login page with data: %+v\n", data)
+	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
+		log.Println(err.Error())
+	}
+}
+
 type ApiStatusResponse struct {
 	Inputs  map[string]string `json:"inputs"`
 	Outputs map[string]bool   `json:"outputs"`
@@ -143,80 +206,15 @@ func apiStatusHandler(configStore *configstore.ConfigStore, inputs []io.Input, o
 	_ = json.NewEncoder(w).Encode(data)
 }
 
-func (w *WebUI) Run(stopChan chan struct{}) {
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		err := w.server.ListenAndServe()
-		log.Printf("Webui: %s\n", err.Error())
-		wg.Done()
-	}()
-	<-stopChan
-	w.server.Close()
-	wg.Wait()
-}
-
-type PageData struct {
-	ConfigProperties map[string]controller.ConfigProperties
-	ConfigValues     map[string]controller.Config
-	Inputs           []io.Input
-	InputErrorConst  float64
-	Outputs          []io.Output
-	Function         string
-	Debug            string
-}
-
-func homeHandler(configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output, w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-
-	function := "default"
-
-	data := PageData{
-		ConfigProperties: make(map[string]controller.ConfigProperties),
-		ConfigValues:     make(map[string]controller.Config),
-		Function:         function,
-	}
-
-	controllers := configStore.GetKeys()
-	for _, controllerName := range controllers {
-		data.ConfigProperties[controllerName] = configStore.GetProperties(controllerName)
-		data.ConfigValues[controllerName] = configStore.Get(controllerName)
-	}
-	data.Inputs = inputs
-	data.InputErrorConst = io.InputError
-	data.Outputs = outputs
-
-	log.Printf("Webui: rendering page with data: %+v\n", data)
-	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
-		log.Println(err.Error())
-	}
-}
-
-func loginGetHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-
-	function := "login"
-
-	data := PageData{
-		Function: function,
-	}
-
-	log.Printf("Webui: rendering login page with data: %+v\n", data)
-	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
-		log.Println(err.Error())
-	}
-}
-
-type JsonRequest struct {
+type ConfigRequest struct {
 	Controller string `json:"controller"`
 	Type       string `json:"type"`
 	Key        string `json:"key"`
 	Value      string `json:"value"`
 }
 
-type JsonResponse struct {
+type ConfigResponse struct {
 	Error     string      `json:"error"`
-	Token     string      `json:"token"`
 	OrigValue interface{} `json:"origValue"`
 }
 
@@ -224,7 +222,7 @@ func configPostHandler(configStore *configstore.ConfigStore, w http.ResponseWrit
 	w.Header().Set("Content-Type", "application/json")
 
 	decoder := json.NewDecoder(r.Body)
-	var data JsonRequest
+	var data ConfigRequest
 	err := decoder.Decode(&data)
 	if err != nil {
 		log.Printf("Webui: decode error on request: %s\n", err.Error())
@@ -278,13 +276,13 @@ func configPostHandler(configStore *configstore.ConfigStore, w http.ResponseWrit
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	u := JsonResponse{Error: "OK"}
+	u := ConfigResponse{Error: ""}
 	_ = json.NewEncoder(w).Encode(u)
 }
 
 func respondError(w http.ResponseWriter, origValue interface{}, err error) {
 	w.WriteHeader(http.StatusConflict)
-	u := JsonResponse{Error: err.Error(), OrigValue: origValue}
+	u := ConfigResponse{Error: err.Error(), OrigValue: origValue}
 	_ = json.NewEncoder(w).Encode(u)
 }
 
@@ -292,24 +290,26 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-func generateJWT() (string, error) {
-	token := jwt.New(jwt.SigningMethodHS256)
+type LoginResponse struct {
+	Error string `json:"error"`
+	Token string `json:"token"`
+}
 
-	claims := token.Claims.(jwt.MapClaims)
+func generateJWT(signingKey []byte) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"uuid": uuid.New(),
+	})
 
-	claims["authorized"] = true
-
-	tokenString, err := token.SignedString(mySigningKey)
+	tokenString, err := token.SignedString(signingKey)
 
 	if err != nil {
-		fmt.Errorf("Something Went Wrong: %s", err.Error())
 		return "", err
 	}
 
 	return tokenString, nil
 }
 
-func loginPostHandler(password string, w http.ResponseWriter, r *http.Request) {
+func loginPostHandler(signingKey []byte, password string, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	log.Printf("Webui: requested login\n")
@@ -319,7 +319,7 @@ func loginPostHandler(password string, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Webui: decode error on login request: %s\n", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		u := JsonResponse{Error: err.Error(), OrigValue: nil}
+		u := ConfigResponse{Error: err.Error(), OrigValue: nil}
 		_ = json.NewEncoder(w).Encode(u)
 		return
 	}
@@ -327,13 +327,13 @@ func loginPostHandler(password string, w http.ResponseWriter, r *http.Request) {
 	if data.Password != password {
 		log.Printf("Webui: user unauthorized\n")
 		w.WriteHeader(http.StatusUnauthorized)
-		u := JsonResponse{Error: "Unauthorized", OrigValue: nil}
+		u := LoginResponse{Error: "Unauthorized"}
 		_ = json.NewEncoder(w).Encode(u)
 		return
 	}
 	log.Printf("Webui: user authorized\n")
-	tokenString, _ := generateJWT()
+	tokenString, _ := generateJWT(signingKey)
 	w.WriteHeader(http.StatusAccepted)
-	u := JsonResponse{Token: tokenString}
+	u := LoginResponse{Token: tokenString}
 	_ = json.NewEncoder(w).Encode(u)
 }
