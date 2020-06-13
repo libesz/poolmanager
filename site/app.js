@@ -45,7 +45,7 @@ if (pageFunction == "login") {
 } else if (pageFunction == "default") {
     const logoutButton = document.querySelector('.logout-button');
     logoutButton.addEventListener('click', () => {document.cookie = "token=;samesite=lax"; location.reload()})
-    var statusUpdater = setInterval(updateStatus, 6000);
+    periodicUpdateStatus()
 
     const switches = document.querySelectorAll('.mdc-switch');
     switches.forEach(s => {
@@ -96,11 +96,17 @@ if (pageFunction == "login") {
                     cbOnError(json.origValue)
                 } else {
                     updateStatus();
+                    setTimeout(updateStatus, 6000)
                 }
             }
         };
         var data = JSON.stringify({"controller": controller, "type": type, "key": key, "value": value.toString()});
         xhr.send(data);
+    }
+
+    function periodicUpdateStatus() {
+        updateStatus()
+        setTimeout(periodicUpdateStatus, 300000)
     }
 
     function updateStatus() {
