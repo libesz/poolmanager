@@ -65,17 +65,19 @@ func (c *PoolPumpController) Act(config Config) []EnqueueRequest {
 		return []EnqueueRequest{}
 	}
 	now := c.now()
-	minutesFromPrevMidnightUntilNextStart := time.Duration(60*int(24-config.Ranges[configKeyRuntime])) * time.Minute
+	dailyTimerValue := c.timer.Value()
+	log.Printf("PoolPumpController: daily timer value: %.2f %s\n", dailyTimerValue, c.timer.Degree())
+	durationFromPrevMidnightUntilNextStart := time.Duration(int(24-config.Ranges[configKeyRuntime])) * time.Hour
 	prevMidnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Local().Location())
-	nextStart := prevMidnight.Add(minutesFromPrevMidnightUntilNextStart)
+	nextStart := prevMidnight.Add(durationFromPrevMidnightUntilNextStart)
 	nextStop := prevMidnight.Add(24 * time.Hour)
-	log.Printf("PoolPumpController: daily timer value: %f\n", c.timer.Value())
-	if config.Ranges[configKeyRuntime] <= c.timer.Value() {
+	if config.Ranges[configKeyRuntime] <= dailyTimerValue {
 		nextStart = nextStart.Add(24 * time.Hour)
 		log.Printf("PoolPumpController: pump time is enough for today, turning off and scheduling turn on in: %s\n", nextStart.Sub(now).String())
 		c.pumpOutput.Set(false)
 		return []EnqueueRequest{{Controller: c, Config: config, After: nextStart.Sub(now)}}
 	}
+	nextStart.Add(time.Duration(dailyTimerValue) * time.Hour)
 	if now.Before(nextStart) {
 		log.Printf("PoolPumpController: we still have time before pump need to run, turning off and scheduling turn on in: %s\n", nextStart.Sub(now).String())
 		c.pumpOutput.Set(false)
