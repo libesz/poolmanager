@@ -5486,21 +5486,29 @@ html, body {
   float: right;
 }
 
+.slider-value-min {
+  margin-right: 5px;
+}
+
 .slider-value-div-min {
   float: left;
   text-align: center;
-  width: 15%;
+  width: 20%;
 }
 
 .slider-value-div {
   display: inline-block;
-  width: 70%;
+  width: 60%;
+}
+
+.slider-value-max {
+  margin-left: 5px;
 }
 
 .slider-value-div-max {
   text-align: center;
   float: right;
-  width: 15%;
+  width: 20%;
 }
 
 .slider-value {

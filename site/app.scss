@@ -60,24 +60,32 @@ html, body {
     //    width: 15%
 }
 
+.slider-value-min {
+    margin-right: 5px;
+}
+
 .slider-value-div-min {
     float:left;
     text-align:center;
 //    border: 1px solid red;
-    width: 15%;
+    width: 20%;
 }
 
 .slider-value-div {
     display: inline-block;
 //    border: 1px solid blue;
-    width: 70%;
+    width: 60%;
+}
+
+.slider-value-max {
+    margin-left: 5px;
 }
 
 .slider-value-div-max {
 //    border: 1px solid green;
     text-align:center;
     float:right;
-    width: 15%
+    width: 20%
 }
 
 .slider-value {

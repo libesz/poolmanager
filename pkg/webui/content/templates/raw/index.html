@@ -94,10 +94,10 @@
                     <label class="switch-label" for="{{$controller}}-{{$item.Name}}">{{$item.Name}}</label>
                   {{end}}
                   {{range $index, $item := $configProperty.Ranges}}
-                    <p class="slider-label">{{$item.Name}}: <span id="slider-value-{{$controller}}-{{$item.Name}}"></span></p>
+                    <p class="slider-label">{{$item.Name}}: <span id="slider-value-{{$controller}}-{{$item.Name}}"></span><span> {{$item.Degree}}</span></p>
                     <div class="slider-value-wrapper">
                       <div class="slider-value-div-min">
-                        <p class="slider-value-min">{{$item.Min}}</p>
+                        <p class="slider-value-min">{{$item.Min}} {{$item.Degree}}</p>
                       </div>
                       <div class="slider-value-div">
                       <div class="mdc-slider" tabindex="0" role="slider"
@@ -115,7 +115,7 @@
                       </div>
                     </div>
                     <div class="slider-value-div-max">
-                      <p class="slider-value-max">{{$item.Max}}</p>
+                      <p class="slider-value-max">{{$item.Max}}  {{$item.Degree}}</p>
                     </div>
                   </div>
                 {{end}}

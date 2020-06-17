@@ -3,10 +3,11 @@ package controller
 import "time"
 
 type ConfigRangeProperties struct {
-	Name string
-	Min  float64
-	Max  float64
-	Step float64
+	Name   string
+	Degree string
+	Min    float64
+	Max    float64
+	Step   float64
 }
 
 type ConfigToggleProperties struct {

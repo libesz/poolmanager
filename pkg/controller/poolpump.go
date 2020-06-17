@@ -27,10 +27,11 @@ func (c *PoolPumpController) GetConfigProperties() ConfigProperties {
 		},
 		Ranges: []ConfigRangeProperties{
 			{
-				Name: configKeyRuntime,
-				Min:  1,
-				Max:  8,
-				Step: 1,
+				Name:   configKeyRuntime,
+				Degree: "H",
+				Min:    1,
+				Max:    8,
+				Step:   1,
 			},
 		},
 	}
