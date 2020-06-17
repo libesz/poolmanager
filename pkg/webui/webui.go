@@ -41,9 +41,10 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 		SigningMethod: jwt.SigningMethodHS256,
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err string) {
 			log.Println("WebUI: unauthorized request:", err)
-			w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0")
 			if !strings.Contains(r.URL.Path, "api/") {
-				http.Redirect(w, r, "/login", 301)
+				w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0")
+				urlToRedirect := r.Header.Get("X-Script-Name") + "/login"
+				http.Redirect(w, r, urlToRedirect, 301)
 				return
 			}
 			w.WriteHeader(http.StatusUnauthorized)

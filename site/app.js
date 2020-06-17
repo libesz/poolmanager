@@ -30,7 +30,7 @@ if (pageFunction == "login") {
                     return
                 }
                 document.cookie = "token="+encodeURIComponent(json.token)+";samesite=lax";
-                window.location.pathname = "/"
+                window.location.pathname = window.location.pathname.split("login")[0];
             }
         };
         var data = JSON.stringify({"password": passwordInput.value});
@@ -87,7 +87,7 @@ if (pageFunction == "login") {
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4) {
                 if (xhr.status === 401) {
-                    window.location.pathname = "/login";
+                    window.location.pathname += "/login";
                 } else if (xhr.status !== 200) {
                     var json = JSON.parse(xhr.responseText);
                     //console.log("Error: " + json.error);
@@ -119,7 +119,7 @@ if (pageFunction == "login") {
             if (xhr.readyState === 4) {
                 var json = JSON.parse(xhr.responseText);
                 if (xhr.status === 401) {
-                    window.location.pathname = "/login";
+                    window.location.pathname += "/login";
                 } else if (xhr.status !== 200) {
                     //console.log("Error: " + json.error);
                     snackbar.labelText = "Error: " + json.error;
