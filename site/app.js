@@ -118,7 +118,9 @@ if (pageFunction == "login") {
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4) {
                 var json = JSON.parse(xhr.responseText);
-                if (xhr.status !== 200) {
+                if (xhr.status === 401) {
+                    window.location.pathname = "/login";
+                } else if (xhr.status !== 200) {
                     //console.log("Error: " + json.error);
                     snackbar.labelText = "Error: " + json.error;
                     snackbar.open()
