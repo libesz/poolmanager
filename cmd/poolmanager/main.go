@@ -57,8 +57,8 @@ func main() {
 		cleanup(cleanTheseUp)
 	}()
 
-	//pumpOutput1 := io.DummyOutput{Name_: "Pump1"}
-	//pumpOutput2 := io.DummyOutput{Name_: "Pump2"}
+	//pumpOutput1 := &io.DummyOutput{Name_: "Pump1"}
+	//pumpOutput2 := &io.DummyOutput{Name_: "Pump2"}
 	pumpOutput1 := io.NewGPIOOutput("Pump1", staticConfig.PumpGPIO1, true)
 	cleanTheseUp = append(cleanTheseUp, pumpOutput1)
 	pumpOutput2 := io.NewGPIOOutput("Pump2", staticConfig.PumpGPIO2, true)
@@ -69,6 +69,12 @@ func main() {
 	pumpController := controller.NewPoolPumpController(&timer, &pumpOrOutputMembers[0], time.Now)
 	pumpControllerConfig := pumpController.GetDefaultConfig()
 
+	//cachedTempSensor := &io.DummyTempSensor{Temperature: 26}
+	realTempSensor := io.NewOneWireTemperatureInput("Pool temperature", staticConfig.TempSensorId)
+	cachedTempSensor := io.NewCacheInput("Pool temperature", 240*time.Second, realTempSensor, time.Now)
+	//heaterOutput := &io.DummyOutput{Name_: "Heater"}
+	heaterOutput := io.NewGPIOOutput("Heater", staticConfig.HeaterGPIO, true)
+	cleanTheseUp = append(cleanTheseUp, heaterOutput)
 	tempController := controller.NewPoolTempController(0.5, cachedTempSensor, heaterOutput, &pumpOrOutputMembers[1], 5*time.Minute, time.Now)
 	tempControllerConfig := tempController.GetDefaultConfig()
 
