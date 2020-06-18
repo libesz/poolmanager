@@ -24,12 +24,13 @@ func cleanup(cleanTheseUp []io.Haltable) {
 }
 
 type StaticConfig struct {
-	ListenOn     string
-	Password     string
-	PumpGPIO1    string
-	PumpGPIO2    string
-	HeaterGPIO   string
-	TempSensorId string
+	ListenOn          string `default:":8000"`
+	Password          string `required:"true"`
+	PumpGPIO1         string `required:"true" default:"GPIO23"`
+	PumpGPIO2         string `required:"true" default:"GPIO24"`
+	HeaterGPIO        string `required:"true" default:"GPIO2"`
+	TempSensorID      string `required:"true"`
+	DynamicConfigPath string `required:"true" default:"config.yaml"`
 }
 
 func main() {
@@ -51,6 +52,7 @@ func main() {
 	if err := envconfig.Process("poolmanager", &staticConfig); err != nil {
 		log.Fatal(err.Error())
 	}
+	log.Printf("Main: Loaded static environment configuration: %+v", staticConfig)
 
 	var cleanTheseUp []io.Haltable
 	defer func() {
@@ -67,16 +69,14 @@ func main() {
 	timer := io.NewTimerOutput("Pump runtime hours today", pumpOutput, time.Now)
 	pumpOrOutputMembers := io.NewOrOutput("Pump", &timer, 2)
 	pumpController := controller.NewPoolPumpController(&timer, &pumpOrOutputMembers[0], time.Now)
-	pumpControllerConfig := pumpController.GetDefaultConfig()
 
 	//cachedTempSensor := &io.DummyTempSensor{Temperature: 26}
-	realTempSensor := io.NewOneWireTemperatureInput("Pool temperature", staticConfig.TempSensorId)
+	realTempSensor := io.NewOneWireTemperatureInput("Pool temperature", staticConfig.TempSensorID)
 	cachedTempSensor := io.NewCacheInput("Pool temperature", 240*time.Second, realTempSensor, time.Now)
 	//heaterOutput := &io.DummyOutput{Name_: "Heater"}
 	heaterOutput := io.NewGPIOOutput("Heater", staticConfig.HeaterGPIO, true)
 	cleanTheseUp = append(cleanTheseUp, heaterOutput)
 	tempController := controller.NewPoolTempController(0.5, cachedTempSensor, heaterOutput, &pumpOrOutputMembers[1], 5*time.Minute, time.Now)
-	tempControllerConfig := tempController.GetDefaultConfig()
 
 	stopChan := make(chan struct{})
 	wg := sync.WaitGroup{}
@@ -88,8 +88,9 @@ func main() {
 		wg.Done()
 	}()
 
+	b := configstore.NewConfigStoreFileBackend(staticConfig.DynamicConfigPath)
 	wg.Add(1)
-	c := configstore.New(&s)
+	c := configstore.NewConfigStore([]controller.Controller{&pumpController, &tempController}, &s, b)
 	go func() {
 		c.Run(stopChan)
 		wg.Done()
@@ -97,13 +98,6 @@ func main() {
 
 	s.AddController(&tempController)
 	s.AddController(&pumpController)
-
-	if err := c.Set(tempController.GetName(), tempControllerConfig, true); err != nil {
-		log.Fatalf("Main: failed to set initial config for PoolTempController: %s\n", err.Error())
-	}
-	if err := c.Set(pumpController.GetName(), pumpControllerConfig, true); err != nil {
-		log.Fatalf("Main: failed to set initial config for PoolPumpController: %s\n", err.Error())
-	}
 
 	wg.Add(1)
 	w := webui.New(staticConfig.ListenOn, staticConfig.Password, c, []io.Input{cachedTempSensor, &timer}, []io.Output{pumpOutput, heaterOutput})

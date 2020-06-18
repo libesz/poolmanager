@@ -2,12 +2,7 @@ package configstore
 
 import "github.com/libesz/poolmanager/pkg/controller"
 
-type configSetItem struct {
-	controller string
-	config     controller.Config
-}
-
-type configSet map[string]*configSetItem
+type configSet map[string]controller.Config
 
 type configStoreSetArgs struct {
 	controller string
@@ -32,10 +27,17 @@ type ConfigStoreHook interface {
 	SetConfigStore(configStore *ConfigStore)
 }
 
+type ConfigStoreBackend interface {
+	Save(configSet) error
+	Load() (configSet, error)
+}
+
 type ConfigStore struct {
-	setChan           chan configStoreSetArgs
-	getChan           chan configStoreGetArgs
-	getKeysChan       chan chan []string
-	getPropertiesChan chan configStoreGetPropertiesArgs
-	hook              ConfigStoreHook
+	all                    configSet
+	setChan                chan configStoreSetArgs
+	getChan                chan configStoreGetArgs
+	getControllerNamesChan chan chan []string
+	getPropertiesChan      chan configStoreGetPropertiesArgs
+	hook                   ConfigStoreHook
+	backend                ConfigStoreBackend
 }

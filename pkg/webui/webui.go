@@ -152,7 +152,7 @@ func homeHandler(configStore *configstore.ConfigStore, inputs []io.Input, output
 		Outputs:          outputs,
 	}
 
-	controllers := configStore.GetKeys()
+	controllers := configStore.GetControllerNames()
 	for _, controllerName := range controllers {
 		data.ConfigProperties[controllerName] = configStore.GetProperties(controllerName)
 		data.ConfigValues[controllerName] = configStore.Get(controllerName)

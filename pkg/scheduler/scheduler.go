@@ -25,6 +25,7 @@ func (s *Scheduler) SetConfigStore(configStore *configstore.ConfigStore) {
 func (s *Scheduler) AddController(c controller.Controller) {
 	log.Printf("Scheduler: added controller: %s\n", c.GetName())
 	s.controllers[c.GetName()] = c
+	s.enqueue(schedulerTask{controller: c, config: s.configStore.Get(c.GetName())})
 }
 
 func (s *Scheduler) GetConfigProperties(controllerName string) controller.ConfigProperties {

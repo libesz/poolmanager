@@ -18,5 +18,6 @@ require (
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd // indirect
 	github.com/urfave/negroni v1.0.0
 	golang.org/x/tools v0.0.0-20200428021058-7ae4988eb4d9 // indirect
+	gopkg.in/yaml.v2 v2.3.0
 	periph.io/x/periph v3.6.2+incompatible
 )
