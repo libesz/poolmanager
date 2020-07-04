@@ -78,7 +78,7 @@ func (c *PoolPumpController) Act(config Config) []EnqueueRequest {
 		c.pumpOutput.Set(false)
 		return []EnqueueRequest{{Controller: c, Config: config, After: nextStart.Sub(now)}}
 	}
-	nextStart.Add(time.Duration(dailyTimerValue) * time.Hour)
+	nextStart = nextStart.Add(time.Duration(dailyTimerValue) * time.Hour)
 	if now.Before(nextStart) {
 		log.Printf("PoolPumpController: we still have time before pump need to run, turning off and scheduling turn on in: %s\n", nextStart.Sub(now).String())
 		c.pumpOutput.Set(false)
