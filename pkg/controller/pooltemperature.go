@@ -180,7 +180,7 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 			c.pendingOperationReady = make(chan struct{}, 1)
 		default:
 			log.Printf("PoolTempController: pending operation is in progress")
-			return []EnqueueRequest{{Controller: c, Config: config, After: c.pollDuration}}
+			return []EnqueueRequest{{Controller: c, Config: config, After: 6 * time.Second}}
 		}
 	}
 	if !config.Toggles[configKeyEnabled] {
