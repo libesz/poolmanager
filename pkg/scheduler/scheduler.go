@@ -71,7 +71,7 @@ func (s *Scheduler) Run(stopChan chan struct{}) {
 			for _, reEnqueAfter := range reEnqueAfterSet {
 				cancelItemChan := make(chan struct{})
 				s.queue[reEnqueAfter.Controller.GetName()] = cancelItemChan
-				go func(request controller.EnqueueRequest) {
+				go func(request controller.EnqueueRequest, cancelChan chan struct{}) {
 					if s.configStore != nil && !controller.IsEmptyConfig(request.Config) {
 						if err := s.configStore.Set(request.Controller.GetName(), request.Config, false); err != nil {
 							log.Printf("Scheduler: invalid config pushed back by controller %s: %s. Aborting controller.\n", request.Controller.GetName(), err.Error())
@@ -83,10 +83,10 @@ func (s *Scheduler) Run(stopChan chan struct{}) {
 					case <-timer:
 						log.Printf("Scheduler: enqueing task for controller: %s\n", request.Controller.GetName())
 						s.enqueue(schedulerTask{controller: request.Controller, config: request.Config})
-					case <-cancelItemChan:
+					case <-cancelChan:
 						log.Printf("Scheduler: cancelling task for controller: %s\n", request.Controller.GetName())
 					}
-				}(reEnqueAfter)
+				}(reEnqueAfter, cancelItemChan)
 			}
 		case cancelRequest := <-s.cancelChan:
 			queueItem, ok := s.queue[cancelRequest.controller]
