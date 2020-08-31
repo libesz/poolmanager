@@ -25,7 +25,13 @@ func (s *Scheduler) SetConfigStore(configStore *configstore.ConfigStore) {
 func (s *Scheduler) AddController(c controller.Controller) {
 	log.Printf("Scheduler: added controller: %s\n", c.GetName())
 	s.controllers[c.GetName()] = c
-	s.enqueue(schedulerTask{controller: c, config: s.configStore.Get(c.GetName())})
+	var config controller.Config
+	if s.configStore != nil {
+		config = s.configStore.Get(c.GetName())
+	} else {
+		config = controller.EmptyConfig()
+	}
+	s.enqueue(schedulerTask{controller: c, config: config})
 }
 
 func (s *Scheduler) GetConfigProperties(controllerName string) controller.ConfigProperties {
@@ -85,13 +91,15 @@ func (s *Scheduler) Run(stopChan chan struct{}) {
 						s.enqueue(schedulerTask{controller: request.Controller, config: request.Config})
 					case <-cancelChan:
 						log.Printf("Scheduler: cancelling task for controller: %s\n", request.Controller.GetName())
+						close(cancelChan)
 					}
 				}(reEnqueAfter, cancelItemChan)
 			}
 		case cancelRequest := <-s.cancelChan:
 			queueItem, ok := s.queue[cancelRequest.controller]
 			if ok {
-				close(queueItem)
+				queueItem <- struct{}{}
+				<-queueItem
 			} else {
 				log.Printf("Scheduler: no task found to cancel for controller: %s\n", cancelRequest.controller)
 			}
