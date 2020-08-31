@@ -106,6 +106,16 @@ func (s *Scheduler) Run(stopChan chan struct{}) {
 			delete(s.queue, cancelRequest.controller)
 			close(cancelRequest.result)
 		case <-stopChan:
+			log.Println("Scheduler: shutting down. Canceling all tasks")
+
+			for _, cancelItemChan := range s.queue {
+				select {
+				case cancelItemChan <- struct{}{}:
+					<-cancelItemChan
+				default:
+					// Task is already done, no go-routing is listening on the channel
+				}
+			}
 			return
 		}
 	}
