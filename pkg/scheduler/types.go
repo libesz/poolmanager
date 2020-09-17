@@ -18,7 +18,7 @@ type cancelTask struct {
 type Scheduler struct {
 	taskChan    chan schedulerTask
 	cancelChan  chan cancelTask
-	queue       map[string]chan struct{}
+	queue       map[string]chan chan struct{}
 	configStore *configstore.ConfigStore
 	controllers map[string]controller.Controller
 }

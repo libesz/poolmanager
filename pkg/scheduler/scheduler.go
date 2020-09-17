@@ -14,7 +14,7 @@ func New() Scheduler {
 		taskChan:    make(chan schedulerTask),
 		cancelChan:  make(chan cancelTask),
 		controllers: make(map[string]controller.Controller),
-		queue:       make(map[string]chan struct{}),
+		queue:       make(map[string]chan chan struct{}),
 	}
 }
 
@@ -64,20 +64,26 @@ func (s *Scheduler) cancelOuter(controllerName string) {
 	<-task.result
 }
 
-func (s *Scheduler) cancelInner(cancelItemChan chan struct{}) {
-	select {
-	case cancelItemChan <- struct{}{}:
-		<-cancelItemChan
-	default:
-		// Task is already done, no go-routing is listening on the channel
+func (s *Scheduler) cancelInner(controllerName string) {
+	cancelItemChan, ok := s.queue[controllerName]
+	if ok {
+		result := make(chan struct{})
+		select {
+		case cancelItemChan <- result:
+			<-result
+		default:
+		}
+	} else {
+		log.Printf("Scheduler: no task found to cancel for controller: %s\n", controllerName)
 	}
+	delete(s.queue, controllerName)
 }
 
 func (s *Scheduler) enqueue(task schedulerTask) {
 	s.taskChan <- task
 }
 
-func (s *Scheduler) taskInQueue(request controller.EnqueueRequest, cancelChan chan struct{}) {
+func (s *Scheduler) taskInQueue(request controller.EnqueueRequest, cancelChan chan chan struct{}) {
 	if s.configStore != nil && !controller.IsEmptyConfig(request.Config) {
 		if err := s.configStore.Set(request.Controller.GetName(), request.Config, false); err != nil {
 			log.Printf("Scheduler: invalid config pushed back by controller %s: %s. Aborting controller.\n", request.Controller.GetName(), err.Error())
@@ -89,9 +95,9 @@ func (s *Scheduler) taskInQueue(request controller.EnqueueRequest, cancelChan ch
 	case <-timer:
 		log.Printf("Scheduler: enqueing task for controller: %s\n", request.Controller.GetName())
 		s.enqueue(schedulerTask{controller: request.Controller, config: request.Config})
-	case <-cancelChan:
+	case result := <-cancelChan:
 		log.Printf("Scheduler: cancelling task for controller: %s\n", request.Controller.GetName())
-		close(cancelChan)
+		close(result)
 	}
 }
 
@@ -102,24 +108,18 @@ func (s *Scheduler) Run(stopChan chan struct{}) {
 			//log.Printf("Scheduler: executing controller: %s\n", task.controller.GetName())
 			reEnqueAfterSet := task.controller.Act(task.config)
 			for _, reEnqueAfter := range reEnqueAfterSet {
-				cancelItemChan := make(chan struct{})
+				cancelItemChan := make(chan chan struct{})
 				s.queue[reEnqueAfter.Controller.GetName()] = cancelItemChan
 				go s.taskInQueue(reEnqueAfter, cancelItemChan)
 			}
 		case cancelRequest := <-s.cancelChan:
-			cancelItemChan, ok := s.queue[cancelRequest.controller]
-			if ok {
-				s.cancelInner(cancelItemChan)
-			} else {
-				log.Printf("Scheduler: no task found to cancel for controller: %s\n", cancelRequest.controller)
-			}
-			delete(s.queue, cancelRequest.controller)
+			s.cancelInner(cancelRequest.controller)
 			close(cancelRequest.result)
 		case <-stopChan:
 			log.Println("Scheduler: shutting down. Canceling all tasks")
 
-			for _, cancelItemChan := range s.queue {
-				s.cancelInner(cancelItemChan)
+			for controllerName := range s.queue {
+				s.cancelInner(controllerName)
 			}
 			return
 		}
