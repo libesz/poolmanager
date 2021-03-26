@@ -1,10 +1,9 @@
 build-design:
 	$(MAKE) -C site build-design
-	cp site/dist/* pkg/webui/content/static/raw
+	cp -r site/dist/* pkg/webui/content/raw
 
 build-content:
-	go generate github.com/libesz/poolmanager/pkg/webui/content/static
-	go generate github.com/libesz/poolmanager/pkg/webui/content/templates
+	go generate github.com/libesz/poolmanager/pkg/webui/content/
 
 prepare-site: build-design build-content
 

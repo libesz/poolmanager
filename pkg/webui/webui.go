@@ -18,9 +18,7 @@ import (
 	"github.com/libesz/poolmanager/pkg/configstore"
 	"github.com/libesz/poolmanager/pkg/controller"
 	"github.com/libesz/poolmanager/pkg/io"
-	"github.com/libesz/poolmanager/pkg/webui/content/static"
-	"github.com/libesz/poolmanager/pkg/webui/content/templates"
-	"github.com/shurcooL/httpfs/html/vfstemplate"
+	"github.com/libesz/poolmanager/pkg/webui/content"
 	"github.com/urfave/negroni"
 )
 
@@ -29,7 +27,6 @@ var parsedTemplates *template.Template
 func New(listenOn, password string, configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output) WebUI {
 	r := mux.NewRouter()
 
-	parsedTemplates = template.Must(vfstemplate.ParseGlob(templates.Content, nil, "*.html"))
 	signingKey := []byte(uuid.New().String())
 	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
@@ -63,22 +60,11 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 		},
 	})
 
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(static.Content)))
-
-	r.Handle("/", negroni.New(
-		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
-		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			homeHandler(configStore, inputs, outputs, w, r)
-		})),
-	)).Methods("GET")
+	r.PathPrefix("/").Handler(http.FileServer(content.Content))
 
 	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		loginPostHandler(signingKey, password, w, r)
 	}).Methods("POST")
-
-	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		loginGetHandler(w, r)
-	}).Methods("GET")
 
 	r.Handle("/api/config", negroni.New(
 		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
@@ -138,45 +124,6 @@ type PageData struct {
 	Outputs          []io.Output
 	Function         string
 	Debug            string
-}
-
-func homeHandler(configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output, w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-
-	data := PageData{
-		ConfigProperties: make(map[string]controller.ConfigProperties),
-		ConfigValues:     make(map[string]controller.Config),
-		Function:         "default",
-		Inputs:           inputs,
-		InputErrorConst:  io.InputError,
-		Outputs:          outputs,
-	}
-
-	controllers := configStore.GetControllerNames()
-	for _, controllerName := range controllers {
-		data.ConfigProperties[controllerName] = configStore.GetProperties(controllerName)
-		data.ConfigValues[controllerName] = configStore.Get(controllerName)
-	}
-
-	log.Printf("Webui: rendering page with data: %+v\n", data)
-	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
-		log.Println(err.Error())
-	}
-}
-
-func loginGetHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-
-	function := "login"
-
-	data := PageData{
-		Function: function,
-	}
-
-	log.Printf("Webui: rendering login page with data: %+v\n", data)
-	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
-		log.Println(err.Error())
-	}
 }
 
 type ApiStatusResponse struct {

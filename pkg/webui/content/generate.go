@@ -11,7 +11,7 @@ import (
 
 func main() {
 	err := vfsgen.Generate(http.Dir("raw"), vfsgen.Options{
-		PackageName:  "static",
+		PackageName:  "content",
 		VariableName: "Content",
 	})
 	if err != nil {
