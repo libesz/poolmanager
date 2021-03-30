@@ -27,21 +27,14 @@
 
       <v-spacer></v-spacer>
 
-      <v-btn
-        href="https://github.com/vuetifyjs/vuetify/releases/latest"
-        target="_blank"
-        text
-      >
-        <span class="mr-2">Latest Release</span>
-        <v-icon>mdi-open-in-new</v-icon>
+      <v-btn v-if="token" @click="logout" text>
+        <span class="mr-2">Logout</span>
+        <v-icon>mdi-logout</v-icon>
       </v-btn>
     </v-app-bar>
 
     <v-main>
-      <div v-if="token">
-      <Main :token="token" />
-      <v-btn @click="logout">Logout</v-btn>
-      </div>
+      <Main v-if="token" :token="token" />
       <Login v-else @successfulLogin="successfulLogin" />
       <p>
         <span>Logged </span>
