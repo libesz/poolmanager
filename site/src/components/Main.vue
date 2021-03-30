@@ -1,18 +1,37 @@
 <template>
   <v-main>
     <v-card class="mx-auto" max-width="344" outlined>
-      <v-list-item three-line>
-        <v-list-item-content>
-          <div class="overline mb-1">
-            STATUS
-          </div>
-        </v-list-item-content>
-        <v-list-item-content>
-          {{status}}
-        </v-list-item-content>
-      </v-list-item>
+      <v-card-title>
+        STATUS
+        <v-spacer></v-spacer>
+        <v-icon>mdi-coolant-temperature</v-icon>
+      </v-card-title>
+      <v-list class="transparent">
+        <v-list-item>
+          <v-simple-table>
+            <template v-slot:default>
+              <tbody>
+                <tr
+                v-for="(inputValue, name) in status.inputs"
+                :key="inputValue"
+                >
+                  <td>{{ name }}</td>
+                  <td>{{ inputValue }}</td>
+                </tr>
+                <tr
+                v-for="(outputValue, name) in status.outputs"
+                :key="outputValue"
+                >
+                  <td>{{ name }}</td>
+                  <td><v-icon v-if="outputValue" color="blue">mdi-brightness-1</v-icon><v-icon v-else>mdi-brightness-1</v-icon></td>
+                </tr>
+              </tbody>
+            </template>
+          </v-simple-table>
+        </v-list-item>
+      </v-list>
       <v-card-actions>
-        <v-btn @click="getStatus">Get status</v-btn>
+        <v-btn @click="getStatus">Update</v-btn>
       </v-card-actions>
     </v-card>
   </v-main>
@@ -47,3 +66,10 @@
     }
   }
 </script>
+<style lang="scss">  
+  tbody {
+     tr:hover {
+        background-color: transparent !important;
+     }
+  }
+</style>
