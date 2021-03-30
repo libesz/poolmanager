@@ -27,8 +27,8 @@
     </v-app-bar>
 
     <v-main>
-      <Main v-if="token" :token="token" />
-      <Login v-else @successfulLogin="successfulLogin" @unsuccessfulLogin="unsuccessfulLogin" />
+      <Main v-if="token" :token="token" @loginFailure="loginFailure" />
+      <Login v-else @successfulLogin="successfulLogin" @loginFailure="loginFailure" />
       <div class="text-center">
         <v-snackbar v-model="snackbar" :timeout="snackbarTimeout">
           {{ snackbarText }}
@@ -82,7 +82,10 @@ export default {
     successfulLogin(token) {
       this.token = token
     },
-    unsuccessfulLogin(error) {
+    loginFailure(error) {
+      if(!error) {
+        error = "Unexpected error. Please log in again."
+      }
       this.snackbarText = error
       this.snackbar = true
       this.logout()

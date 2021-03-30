@@ -36,7 +36,7 @@
             if(result.status >= 200 && result.status <= 299){
               this.$emit('successfulLogin', decoded.token)
             } else {
-              this.$emit('unsuccessfulLogin', decoded.error)
+              this.$emit('loginFailure', decoded.error)
             } 
           })
         })
