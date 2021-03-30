@@ -29,11 +29,6 @@
     <v-main>
       <Main v-if="token" :token="token" />
       <Login v-else @successfulLogin="successfulLogin" @unsuccessfulLogin="unsuccessfulLogin" />
-      <p>
-        <span>Logged </span>
-        <span v-if="token">in, token: {{token}}</span>
-        <span v-else>out</span>
-      </p>
       <div class="text-center">
         <v-snackbar v-model="snackbar" :timeout="snackbarTimeout">
           {{ snackbarText }}
