@@ -28,12 +28,22 @@
 
     <v-main>
       <Main v-if="token" :token="token" />
-      <Login v-else @successfulLogin="successfulLogin" />
+      <Login v-else @successfulLogin="successfulLogin" @unsuccessfulLogin="unsuccessfulLogin" />
       <p>
         <span>Logged </span>
         <span v-if="token">in, token: {{token}}</span>
         <span v-else>out</span>
       </p>
+      <div class="text-center">
+        <v-snackbar v-model="snackbar" :timeout="snackbarTimeout">
+          {{ snackbarText }}
+          <template v-slot:action="{ attrs }">
+            <v-btn color="blue" text v-bind="attrs" @click="snackbar = false" >
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </template>
+        </v-snackbar>
+      </div>
     </v-main>
   </v-app>
 </template>
@@ -51,30 +61,36 @@ export default {
     Login
   },
 
-  data: () => {
-    return {
+  data: () => ({
       token: '',
-      status: ''
+
+      snackbar: false,
+      snackbarText: '',
+      snackbarTimeout: 4000,
     }
-  },
-  mounted() {
-    if (localStorage.token) {
+  ),
+  created() {
+    console.log(localStorage.token)
+    if (localStorage.token && localStorage.token != 'null') {
       this.token = localStorage.token;
     }
   },
-  /*watch: {
+  watch: {
     token(token) {
       localStorage.token = token;
     }
-  },*/
+  },
   methods: {
     logout() {
-      localStorage.token = null
-      this.token = null
+      this.token = ''
     },
     successfulLogin(token) {
-      localStorage.token = token
       this.token = token
+    },
+    unsuccessfulLogin(error) {
+      this.snackbarText = error
+      this.snackbar = true
+      this.logout()
     }
   }
 };

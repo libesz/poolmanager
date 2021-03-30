@@ -18,7 +18,11 @@
         .then((result) => {
           console.log(result)
           result.json().then( (decoded) => {
-            this.$emit('successfulLogin', decoded.token)
+            if(result.status >= 200 && result.status <= 299){
+              this.$emit('successfulLogin', decoded.token)
+            } else {
+              this.$emit('unsuccessfulLogin', decoded.error)
+            } 
           })
         })
         .catch((err) => console.log(err))

@@ -19,14 +19,14 @@
     },
     methods: {
       getStatus() {
-      fetch('/api/status', {headers: {'Authorization': 'Bearer ' + this.$props.token}})
-      .then((result) => {
-        result.json()
-        .then((decoded) => this.status = decoded)
+        fetch('/api/status', {headers: {'Authorization': 'Bearer ' + this.$props.token}})
+        .then((result) => {
+          result.json()
+          .then((decoded) => this.status = decoded)
+          .catch((err) => console.log(err))
+        }).catch((err) => console.log(err))
         .catch((err) => console.log(err))
-      }).catch((err) => console.log(err))
-      .catch((err) => console.log(err))
+      }
     }
-  }
   }
 </script>
