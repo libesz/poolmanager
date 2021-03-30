@@ -2,4 +2,4 @@
 site/node_modules
 site/dist
 content_vfsdata.go
-pkg/webui/content/static/raw/
+pkg/webui/content/raw

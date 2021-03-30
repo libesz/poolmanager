@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -36,33 +35,10 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 		// If the signing method is not constant the ValidationKeyGetter callback can be used to implement additional checks
 		// Important to avoid security issues described here: https://auth0.com/blog/2015/03/31/critical-vulnerabilities-in-json-web-token-libraries/
 		SigningMethod: jwt.SigningMethodHS256,
-		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err string) {
-			log.Println("WebUI: unauthorized request:", err)
-			if !strings.Contains(r.URL.Path, "api/") {
-				w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0")
-				urlToRedirect := r.Header.Get("X-Script-Name") + "/login"
-				http.Redirect(w, r, urlToRedirect, 301)
-				return
-			}
-			w.WriteHeader(http.StatusUnauthorized)
-		},
-		Extractor: func(r *http.Request) (string, error) {
-			if !strings.Contains(r.URL.Path, "api/") {
-				tokenFromCookie, err := r.Cookie("token")
-				if err != nil {
-					return "", fmt.Errorf("Web client shall use cookie tokens")
-				}
-				//log.Println("Extractor: returning token with cookie value:", tokenFromCookie.Value)
-				return tokenFromCookie.Value, nil
-			}
-			//log.Println("Extractor: passing to FromAuthHeader")
-			return jwtmiddleware.FromAuthHeader(r)
-		},
 	})
 
-	r.PathPrefix("/").Handler(http.FileServer(content.Content))
-
 	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("login attempted")
 		loginPostHandler(signingKey, password, w, r)
 	}).Methods("POST")
 
@@ -84,6 +60,8 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 			apiStatusHandler(configStore, inputs, outputs, w, r)
 		})),
 	)).Methods("GET")
+
+	r.PathPrefix("/").Handler(http.FileServer(content.Content))
 
 	server := &http.Server{
 		Handler:      r,
