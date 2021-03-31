@@ -1,5 +1,5 @@
 <template>
-  <v-card class="mx-auto" width="344" outlined>
+  <v-card width="344" height="100%" outlined>
     <v-card-title>
       {{ controllerName }}
       <v-spacer></v-spacer>

@@ -1,23 +1,28 @@
 <template>
-  <div>
-    <v-card class="mx-auto" max-width="344" outlined>
-      <v-img src="pool_resized.jpg" height="200px"></v-img>
-      <v-card-title>
-        LOGIN
-      </v-card-title>
-      <v-list class="transparent">
-        <v-list-item>
-          <v-text-field label="Password" v-model="password" type="password"></v-text-field>
-        </v-list-item>
-      </v-list>
-      <v-divider></v-divider>
-      <v-card-actions>
-        <v-btn outlined text @click="tryLogin">
-          Login
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </div>
+  <v-container>
+    <v-row>
+      <v-col class="flex-grow-0">
+        <v-card max-width="344" outlined>
+          <v-img src="pool_resized.jpg" height="200px"></v-img>
+          <v-card-title>
+            LOGIN
+          </v-card-title>
+          <v-list class="transparent">
+            <v-list-item>
+              <v-text-field label="Password" v-model="password" type="password"></v-text-field>
+            </v-list-item>
+          </v-list>
+          <v-divider></v-divider>
+          <v-card-actions>
+            <v-btn outlined text @click="tryLogin">
+              Login
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
+
 </template>
 
 <script>
