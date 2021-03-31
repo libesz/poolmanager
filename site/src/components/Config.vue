@@ -1,50 +1,50 @@
 <template>
   <v-card class="mx-auto" width="344" outlined>
     <v-card-title>
-      STATUS
+      {{ controllerName }}
       <v-spacer></v-spacer>
-      <v-icon>mdi-coolant-temperature</v-icon>
+      <v-icon>mdi-cog-outline</v-icon>
     </v-card-title>
     <v-list class="transparent">
       <v-list-item>
+        <v-layout child-flex>
         <v-simple-table>
-          <template v-slot:default>
             <tbody>
               <tr
-              v-for="(inputValue, name) in status.inputs"
-              :key="inputValue"
+              v-for="(toggle, index) in controllerConfigSchema.Toggles"
+              :key="toggle+index"
               >
-                <td>{{ name }}</td>
-                <td>{{ inputValue }}</td>
+                <td>{{ toggle }}</td>
+                <td>{{ toggle }}</td>
               </tr>
               <tr
-              v-for="(outputValue, name) in status.outputs"
-              :key="outputValue"
+              v-for="(rangeProperties, rangeName, index) in controllerConfigSchema.Ranges"
+              :key="rangeName + index"
               >
-                <td>{{ name }}</td>
-                <td><v-icon v-if="outputValue" color="blue">mdi-brightness-1</v-icon><v-icon v-else>mdi-brightness-1</v-icon></td>
+                <td>{{ rangeName }}</td>
+                <td>{{ rangeProperties.Min}} {{rangeProperties.Max}}</td>
               </tr>
             </tbody>
-          </template>
-        </v-simple-table>
+          </v-simple-table>
+        </v-layout>
       </v-list-item>
     </v-list>
-    <v-card-actions>
-      <v-btn @click="getStatus">Update</v-btn>
-    </v-card-actions>
   </v-card>
 </template>
 
 <script>
   export default {
-    name: 'Status',
+    name: 'Config',
 
-    props: [
-      'token',
-    ],
+    props: {
+      token: String,
+      controllerConfigSchema: Object,
+      controllerName: String
+    },
     data: () => {
       return {
-        status: ''
+
+
       }
     },
     methods: {

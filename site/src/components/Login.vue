@@ -1,5 +1,5 @@
 <template>
-  <v-main>
+  <div>
     <v-card class="mx-auto" max-width="344" outlined>
       <v-img src="pool_resized.jpg" height="200px"></v-img>
       <v-card-title>
@@ -17,7 +17,7 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-  </v-main>
+  </div>
 </template>
 
 <script>
