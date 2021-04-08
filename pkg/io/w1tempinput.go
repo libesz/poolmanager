@@ -34,9 +34,9 @@ func (o *OneWireTemperatureInput) Value() float64 {
 		log.Printf("OneWireTemperatureInput: Failed to open onewire file: %s, error: %s", o.fullPath, err.Error())
 		return InputError
 	}
-	rawMatched := regexp.MustCompile(` t=([0-9]{4,5})`).FindSubmatch(raw)
+	rawMatched := regexp.MustCompile(` t=(.+)`).FindSubmatch(raw)
 	if rawMatched == nil || len(rawMatched) != 2 {
-		log.Printf("OneWireTemperatureInput: Failed to parse valid value from onewire file: %s", o.fullPath)
+		log.Printf("OneWireTemperatureInput: Failed to parse valid value from onewire file: %s. Content: %s", o.fullPath, string(raw))
 		return InputError
 	}
 	converted, err := strconv.Atoi(string(rawMatched[1]))
