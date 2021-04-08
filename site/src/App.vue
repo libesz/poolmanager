@@ -7,7 +7,7 @@
     >
       <div class="d-flex align-center">
         <v-img
-          alt="Vuetify Logo"
+          alt="Pool Manager Logo"
           class="shrink mr-2"
           contain
           src="/favicon.png"

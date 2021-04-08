@@ -8,9 +8,9 @@
         v-for="(controllerConfigSchema, controllerName) in configSchema"
         :key="controllerName"
       >
-      <Config :token="token" @loginFailure="$emit('loginFailure')"
-        :controllerConfigSchema="controllerConfigSchema"
-        :controllerName="controllerName" />
+        <Config :token="token" @loginFailure="$emit('loginFailure')"
+          :controllerConfigSchema="controllerConfigSchema"
+          :controllerName="controllerName" />
       </v-col>
     </v-row>
   </v-container>

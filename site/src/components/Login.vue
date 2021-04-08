@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-row>
-      <v-col class="flex-grow-0">
+      <v-col class="d-flex justify-center">
         <v-card max-width="344" outlined>
           <v-img src="pool_resized.jpg" height="200px"></v-img>
           <v-card-title>
