@@ -27,7 +27,7 @@
     </v-app-bar>
 
     <v-main>
-      <Main v-if="token" :token="token" @loginFailure="loginFailure" />
+      <Main v-if="token" :token="token" @loginFailure="loginFailure" @configError="configError($event)" />
       <Login v-else @successfulLogin="successfulLogin" @loginFailure="loginFailure" />
       <div class="text-center">
         <v-snackbar v-model="snackbar" :timeout="snackbarTimeout">
@@ -89,6 +89,13 @@ export default {
       this.snackbarText = error
       this.snackbar = true
       this.logout()
+    },
+    configError(error) {
+      if(!error) {
+        error = "Unexpected error. Please log in again."
+      }
+      this.snackbarText = error
+      this.snackbar = true
     }
   }
 };

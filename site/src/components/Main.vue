@@ -8,7 +8,7 @@
         v-for="(controllerConfigSchema, controllerName) in configSchema"
         :key="controllerName"
       >
-        <Config :token="token" @loginFailure="$emit('loginFailure')"
+        <Config :token="token" @loginFailure="$emit('loginFailure')" @configError="$emit('configError', $event)"
           :controllerConfigSchema="controllerConfigSchema"
           :controllerName="controllerName" />
       </v-col>
@@ -34,15 +34,15 @@
               'Enabled'
             ],
             Ranges: {
-              'Temperature': {
+              'Desired temperature': {
                 Min: '20',
                 Max: '29'
               },
-              'Start time': {
+              'Start hour': {
                 Min: '1',
                 Max: '23'
               },
-              'End time': {
+              'End hour': {
                 Min: '1',
                 Max: '23'
               }
@@ -53,7 +53,7 @@
               'Enabled'
             ],
             Ranges: {
-              'Daily runtime': {
+              'Desired runtime per day in hours': {
                 Min: '1',
                 Max: '23'
               }

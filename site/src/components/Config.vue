@@ -11,18 +11,18 @@
         <v-simple-table>
             <tbody>
               <tr
-              v-for="(toggle, index) in controllerConfigSchema.Toggles"
-              :key="toggle+index"
+              v-for="(toggleName, index) in controllerConfigSchema.Toggles"
+              :key="toggleName+index"
               >
-                <td>{{ toggle }}</td>
-                <td>{{ toggle }}</td>
+                <td>{{ toggleName }}</td>
+                <td><v-switch @change="switchChange(controllerName, toggleName, $event)"></v-switch></td>
               </tr>
               <tr
               v-for="(rangeProperties, rangeName, index) in controllerConfigSchema.Ranges"
               :key="rangeName + index"
               >
                 <td>{{ rangeName }}</td>
-                <td>{{ rangeProperties.Min}} {{rangeProperties.Max}}</td>
+                <td width="70%"><v-slider :hint="rangeName" :min="rangeProperties.Min" :max="rangeProperties.Max" @change="sliderChange(controllerName, rangeName, $event)" thumb-label="always"></v-slider></td>
               </tr>
             </tbody>
           </v-simple-table>
@@ -60,6 +60,45 @@
             } 
         }).catch((err) => console.log(err))
         .catch((err) => console.log(err))
+      },
+      switchChange(controllerName, toggleName, value) {
+        console.log(`Toggle change: ${controllerName} ${toggleName} ${value}`)
+        fetch('/api/config', {
+          method: 'POST',
+          headers: {'Authorization': 'Bearer ' + this.$props.token},
+          body: JSON.stringify({'controller':controllerName, 'type':'toggle', 'key':toggleName, 'value':value.toString()})
+        })
+        .then((result) => {
+          result.json()
+          .then((decoded) => {
+            if(result.status >= 200 && result.status <= 299){
+              console.log('ok')
+            } else {
+              this.$emit('configError', decoded)
+            }
+          })
+          .catch(() => this.$emit('loginFailure'))
+        }).catch((err) => console.log(err))
+        .catch((err) => console.log(err))
+      },
+      sliderChange(controllerName, rangeName, value) {
+        console.log(`Slider change: ${controllerName} ${rangeName} ${value}`)
+        fetch('/api/config', {
+          method: 'POST',
+          headers: {'Authorization': 'Bearer ' + this.$props.token},
+          body: JSON.stringify({'controller':controllerName, 'type':'range', 'key':rangeName, 'value':value.toString()})
+        })
+        .then((result) => {
+          result.json()
+          .then((decoded) => {
+            if(result.status >= 200 && result.status <= 299){
+              console.log('ok')
+            } else {
+              this.$emit('configError', decoded.error)
+            }
+          })
+          .catch(() => this.$emit('loginFailure'))
+        }).catch((err) => console.log(err))
       }
     }
   }
