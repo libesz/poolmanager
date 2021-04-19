@@ -49,6 +49,13 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 		})),
 	)).Methods("POST")
 
+	r.Handle("/api/config", negroni.New(
+		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
+		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			configGetHandler(configStore, w, r)
+		})),
+	)).Methods("GET")
+
 	r.Handle("/api/ping", negroni.New(
 		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
 		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { myHandler(w, r) })),
@@ -94,16 +101,6 @@ func (w *WebUI) Run(stopChan chan struct{}) {
 	wg.Wait()
 }
 
-type PageData struct {
-	ConfigProperties map[string]controller.ConfigProperties
-	ConfigValues     map[string]controller.Config
-	Inputs           []io.Input
-	InputErrorConst  float64
-	Outputs          []io.Output
-	Function         string
-	Debug            string
-}
-
 type ApiStatusResponse struct {
 	Inputs  map[string]string `json:"inputs"`
 	Outputs map[string]bool   `json:"outputs"`
@@ -132,23 +129,47 @@ func apiStatusHandler(configStore *configstore.ConfigStore, inputs []io.Input, o
 	_ = json.NewEncoder(w).Encode(data)
 }
 
-type ConfigRequest struct {
+type ConfigChangeRequest struct {
 	Controller string `json:"controller"`
 	Type       string `json:"type"`
 	Key        string `json:"key"`
 	Value      string `json:"value"`
 }
 
-type ConfigResponse struct {
+type ConfigChangeResponse struct {
 	Error     string      `json:"error"`
 	OrigValue interface{} `json:"origValue"`
+}
+
+type ConfigData struct {
+	ConfigProperties map[string]controller.ConfigProperties `json:"schema"`
+	ConfigValues     map[string]controller.Config           `json:"values"`
+}
+
+func configGetHandler(configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	data := ConfigData{
+		ConfigProperties: make(map[string]controller.ConfigProperties),
+		ConfigValues:     make(map[string]controller.Config),
+	}
+
+	controllers := configStore.GetControllerNames()
+	for _, controllerName := range controllers {
+		data.ConfigProperties[controllerName] = configStore.GetProperties(controllerName)
+		data.ConfigValues[controllerName] = configStore.Get(controllerName)
+	}
+
+	log.Printf("Webui: config properties response rendered with data: %+v\n", data)
+	json.NewEncoder(w).Encode(&data)
 }
 
 func configPostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	decoder := json.NewDecoder(r.Body)
-	var data ConfigRequest
+	var data ConfigChangeRequest
 	err := decoder.Decode(&data)
 	if err != nil {
 		log.Printf("Webui: decode error on request: %s\n", err.Error())
@@ -202,13 +223,13 @@ func configPostHandler(configStore *configstore.ConfigStore, w http.ResponseWrit
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	u := ConfigResponse{Error: ""}
+	u := ConfigChangeResponse{Error: ""}
 	_ = json.NewEncoder(w).Encode(u)
 }
 
 func respondError(w http.ResponseWriter, origValue interface{}, err error) {
 	w.WriteHeader(http.StatusConflict)
-	u := ConfigResponse{Error: err.Error(), OrigValue: origValue}
+	u := ConfigChangeResponse{Error: err.Error(), OrigValue: origValue}
 	_ = json.NewEncoder(w).Encode(u)
 }
 
@@ -245,7 +266,7 @@ func loginPostHandler(signingKey []byte, password string, w http.ResponseWriter,
 	if err != nil {
 		log.Printf("Webui: decode error on login request: %s\n", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		u := ConfigResponse{Error: err.Error(), OrigValue: nil}
+		u := ConfigChangeResponse{Error: err.Error(), OrigValue: nil}
 		_ = json.NewEncoder(w).Encode(u)
 		return
 	}

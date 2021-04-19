@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container v-if="configSchema !== null">
     <v-row>
       <v-col class="flex-grow-0">
         <Status :token="token" @loginFailure="$emit('loginFailure')" />
@@ -10,6 +10,7 @@
       >
         <Config :token="token" @loginFailure="$emit('loginFailure')" @configError="$emit('configError', $event)"
           :controllerConfigSchema="controllerConfigSchema"
+          :controllerConfigData="initialConfigData[controllerName]"
           :controllerName="controllerName" />
       </v-col>
     </v-row>
@@ -28,42 +29,29 @@
     },
     data: () => {
       return {
-        configSchema: {
-          'Temperature controller': {
-            Toggles: [
-              'Enabled'
-            ],
-            Ranges: {
-              'Desired temperature': {
-                Min: '20',
-                Max: '29'
-              },
-              'Start hour': {
-                Min: '1',
-                Max: '23'
-              },
-              'End hour': {
-                Min: '1',
-                Max: '23'
-              }
-            }
-          },
-          'Pump controller': {
-            Toggles: [
-              'Enabled'
-            ],
-            Ranges: {
-              'Desired runtime per day in hours': {
-                Min: '1',
-                Max: '23'
-              }
-            }
-          }
-        }
+        configSchema: null,
+        initialConfigData: null
       }
     },
     props: [
       'token',
-    ]
+    ],
+    created() {
+      fetch('/api/config', {headers: {'Authorization': 'Bearer ' + this.$props.token}})
+      .then((result) => {
+        if(result.status >= 200 && result.status <= 299){
+          result.json()
+          .then((decoded) => {
+            this.configSchema = decoded.schema
+            this.initialConfigData = decoded.values
+            console.log(decoded)
+          })
+          .catch((err) => console.log(err))
+        } else {
+          this.$emit('loginFailure')
+        } 
+      }).catch((err) => console.log(err))
+      .catch((err) => console.log(err))
+    }
   }
 </script>

@@ -11,18 +11,18 @@
         <v-simple-table>
             <tbody>
               <tr
-              v-for="(toggleName, index) in controllerConfigSchema.Toggles"
-              :key="toggleName+index"
+              v-for="(toggle, index) in controllerConfigSchema.toggles"
+              :key="toggle.name+index"
               >
-                <td>{{ toggleName }}</td>
-                <td><v-switch @change="switchChange(controllerName, toggleName, $event)"></v-switch></td>
+                <td>{{ toggle.name }}</td>
+                <td><v-switch @change="switchChange(controllerName, toggle.name, $event)" :value="controllerConfigData.toggles[toggle.name]"></v-switch></td>
               </tr>
               <tr
-              v-for="(rangeProperties, rangeName, index) in controllerConfigSchema.Ranges"
-              :key="rangeName + index"
+              v-for="(range, index) in controllerConfigSchema.ranges"
+              :key="range.name + index"
               >
-                <td>{{ rangeName }}</td>
-                <td width="70%"><v-slider :hint="rangeName" :min="rangeProperties.Min" :max="rangeProperties.Max" @change="sliderChange(controllerName, rangeName, $event)" thumb-label="always"></v-slider></td>
+                <td>{{ range.name }}</td>
+                <td width="70%"><v-slider :hint="range.name" :min="range.min" :max="range.max" @change="sliderChange(controllerName, range.name, $event)" thumb-label="always" :value="controllerConfigData.ranges[range.name]"></v-slider></td>
               </tr>
             </tbody>
           </v-simple-table>
@@ -39,6 +39,7 @@
     props: {
       token: String,
       controllerConfigSchema: Object,
+      controllerConfigData: Object,
       controllerName: String
     },
     data: () => {
