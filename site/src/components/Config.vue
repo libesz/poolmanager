@@ -15,14 +15,14 @@
               :key="toggle.name+index"
               >
                 <td>{{ toggle.name }}</td>
-                <td><v-switch @change="switchChange(controllerName, toggle.name, $event)" :value="controllerConfigData.toggles[toggle.name]"></v-switch></td>
+                <td><v-switch @change="switchChange(controllerName, toggle.name, $event)" v-model="controllerConfigData.toggles[toggle.name]"></v-switch></td>
               </tr>
               <tr
               v-for="(range, index) in controllerConfigSchema.ranges"
               :key="range.name + index"
               >
                 <td>{{ range.name }}</td>
-                <td width="70%"><v-slider :hint="range.name" :min="range.min" :max="range.max" @change="sliderChange(controllerName, range.name, $event)" thumb-label="always" :value="controllerConfigData.ranges[range.name]"></v-slider></td>
+                <td width="70%"><v-slider :hint="range.name" :min="range.min" :max="range.max" :step="range.step" @change="sliderChange(controllerName, range.name, $event)" thumb-label="always" :value="controllerConfigData.ranges[range.name]"></v-slider></td>
               </tr>
             </tbody>
           </v-simple-table>
