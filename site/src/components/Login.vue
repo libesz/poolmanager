@@ -9,7 +9,7 @@
           </v-card-title>
           <v-list class="transparent">
             <v-list-item>
-              <v-text-field label="Password" v-model="password" type="password"></v-text-field>
+              <v-text-field label="Password" v-model="password" type="password" @keydown.enter="tryLogin"></v-text-field>
             </v-list-item>
           </v-list>
           <v-divider></v-divider>
