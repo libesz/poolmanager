@@ -47,6 +47,9 @@
         status: ''
       }
     },
+    created() {
+      setInterval(this.getStatus, 5000)
+    },
     methods: {
       getStatus() {
         fetch('/api/status', {headers: {'Authorization': 'Bearer ' + this.$props.token}})
