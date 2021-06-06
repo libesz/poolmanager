@@ -75,6 +75,7 @@
             if(result.status >= 200 && result.status <= 299){
               console.log('ok')
             } else {
+              this.controllerConfigData.toggles[toggleName] = decoded.origValue
               this.$emit('configError', decoded)
             }
           })
@@ -95,6 +96,7 @@
             if(result.status >= 200 && result.status <= 299){
               console.log('ok')
             } else {
+              this.controllerConfigData.ranges[rangeName] = decoded.origValue
               this.$emit('configError', decoded.error)
             }
           })
