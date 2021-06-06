@@ -15,7 +15,7 @@
           width="40"
         />
 
-        <span class="display-1">Pool manager</span>
+        <v-toolbar-title>Pool manager</v-toolbar-title>
       </div>
 
       <v-spacer></v-spacer>
