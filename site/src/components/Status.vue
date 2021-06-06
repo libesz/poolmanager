@@ -29,9 +29,9 @@
         </v-simple-table>
       </v-list-item>
     </v-list>
-    <v-card-actions>
+    <!--v-card-actions>
       <v-btn @click="getStatus">Update</v-btn>
-    </v-card-actions>
+    </v-card-actions-->
   </v-card>
 </template>
 
@@ -48,6 +48,7 @@
       }
     },
     created() {
+      this.getStatus()
       setInterval(this.getStatus, 5000)
     },
     methods: {
