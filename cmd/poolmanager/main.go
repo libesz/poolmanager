@@ -73,10 +73,11 @@ func main() {
 	//cachedTempSensor := &io.DummyTempSensor{Temperature: 26}
 	realTempSensor := io.NewOneWireTemperatureInput("Pool temperature", staticConfig.TempSensorID)
 	cachedTempSensor := io.NewCacheInput("Pool temperature", 240*time.Second, realTempSensor, time.Now)
+	meteredTempSensor := io.NewMeteredInput(cachedTempSensor)
 	//heaterOutput := &io.DummyOutput{Name_: "Heater"}
 	heaterOutput := io.NewGPIOOutput("Heater", staticConfig.HeaterGPIO, true)
 	cleanTheseUp = append(cleanTheseUp, heaterOutput)
-	tempController := controller.NewPoolTempController(0.5, cachedTempSensor, heaterOutput, &pumpOrOutputMembers[1], 5*time.Minute, time.Now)
+	tempController := controller.NewPoolTempController(0.5, meteredTempSensor, heaterOutput, &pumpOrOutputMembers[1], 5*time.Minute, time.Now)
 
 	stopChan := make(chan struct{})
 	wg := sync.WaitGroup{}
