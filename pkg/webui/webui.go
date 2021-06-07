@@ -18,6 +18,7 @@ import (
 	"github.com/libesz/poolmanager/pkg/controller"
 	"github.com/libesz/poolmanager/pkg/io"
 	"github.com/libesz/poolmanager/pkg/webui/content"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/urfave/negroni"
 )
 
@@ -67,6 +68,8 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 			apiStatusHandler(configStore, inputs, outputs, w, r)
 		})),
 	)).Methods("GET")
+
+	r.Handle("/metrics", promhttp.Handler())
 
 	r.PathPrefix("/").Handler(http.FileServer(content.Content))
 
