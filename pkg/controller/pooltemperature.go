@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/libesz/poolmanager/pkg/io"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func NewPoolTempController(
@@ -15,26 +16,36 @@ func NewPoolTempController(
 	pumpOutput io.Output,
 	pollDuration time.Duration,
 	now func() time.Time) PoolTempController {
+	calculatedDesiredTempGauge := prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: "poolmanager",
+		Subsystem: "input",
+		Name:      "calculatedDesiredTemperature",
+		Help:      "Temperature",
+	})
+	prometheus.MustRegister(calculatedDesiredTempGauge)
+
 	return PoolTempController{
-		heaterFactor:          heaterFactor,
-		tempSensor:            tempSensor,
-		heaterOutput:          heaterOutput,
-		pumpOutput:            pumpOutput,
-		now:                   now,
-		pollDuration:          pollDuration,
-		pendingOperationReady: make(chan struct{}, 1),
+		heaterFactor:               heaterFactor,
+		tempSensor:                 tempSensor,
+		heaterOutput:               heaterOutput,
+		pumpOutput:                 pumpOutput,
+		now:                        now,
+		pollDuration:               pollDuration,
+		pendingOperationReady:      make(chan struct{}, 1),
+		calculatedDesiredTempGauge: calculatedDesiredTempGauge,
 	}
 }
 
 type PoolTempController struct {
-	heaterFactor          float64
-	tempSensor            io.Input
-	heaterOutput          io.Output
-	pumpOutput            io.Output
-	pendingOperation      bool
-	pendingOperationReady chan struct{}
-	pollDuration          time.Duration
-	now                   func() time.Time
+	heaterFactor               float64
+	tempSensor                 io.Input
+	heaterOutput               io.Output
+	pumpOutput                 io.Output
+	pendingOperation           bool
+	pendingOperationReady      chan struct{}
+	pollDuration               time.Duration
+	now                        func() time.Time
+	calculatedDesiredTempGauge prometheus.Gauge
 }
 
 const (
@@ -206,6 +217,7 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 	}
 	thisManyHoursUntilNextStart = nextStart.Sub(now).Hours()
 	calculatedDesiredTemp := config.Ranges[configKeyTemp] - thisManyHoursUntilNextStart*c.heaterFactor
+	c.calculatedDesiredTempGauge.Set(calculatedDesiredTemp)
 	if calculatedDesiredTemp >= currentTemp {
 		log.Printf("PoolTempController: hours back: %.2f. Actual temperature: %.2f %s. Calculated desired temperature: %.2f %s. Need more heat.\n", thisManyHoursUntilNextStart, currentTemp, c.tempSensor.Degree(), calculatedDesiredTemp, c.tempSensor.Degree())
 		return append(c.startup(), EnqueueRequest{Controller: c, Config: config, After: c.pollDuration})
