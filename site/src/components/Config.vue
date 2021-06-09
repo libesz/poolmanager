@@ -50,7 +50,7 @@
     },
     methods: {
       getStatus() {
-        fetch('/api/status', {headers: {'Authorization': 'Bearer ' + this.$props.token}})
+        fetch('api/status', {headers: {'Authorization': 'Bearer ' + this.$props.token}})
         .then((result) => {
             if(result.status >= 200 && result.status <= 299){
               result.json()
@@ -64,7 +64,7 @@
       },
       switchChange(controllerName, toggleName, value) {
         console.log(`Toggle change: ${controllerName} ${toggleName} ${value}`)
-        fetch('/api/config', {
+        fetch('api/config', {
           method: 'POST',
           headers: {'Authorization': 'Bearer ' + this.$props.token},
           body: JSON.stringify({'controller':controllerName, 'type':'toggle', 'key':toggleName, 'value':value.toString()})
@@ -85,7 +85,7 @@
       },
       sliderChange(controllerName, rangeName, value) {
         console.log(`Slider change: ${controllerName} ${rangeName} ${value}`)
-        fetch('/api/config', {
+        fetch('api/config', {
           method: 'POST',
           headers: {'Authorization': 'Bearer ' + this.$props.token},
           body: JSON.stringify({'controller':controllerName, 'type':'range', 'key':rangeName, 'value':value.toString()})
