@@ -91,7 +91,7 @@ func main() {
 
 	var heaterOutput io.Output
 	if !staticConfig.FakeIO {
-		heaterOutputTemp := io.NewGPIOOutput("Heater", staticConfig.HeaterGPIO, true)
+		heaterOutputTemp := io.NewGPIOOutput("Heater", staticConfig.HeaterGPIO, false)
 		cleanTheseUp = append(cleanTheseUp, heaterOutputTemp)
 		heaterOutput = heaterOutputTemp
 	} else {
