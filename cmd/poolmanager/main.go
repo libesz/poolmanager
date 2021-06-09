@@ -73,7 +73,8 @@ func main() {
 		pumpOutput2 := &io.DummyOutput{Name_: "Pump2"}
 		pumpOutput = io.NewOutputDistributor("Pump", []io.Output{pumpOutput1, pumpOutput2})
 	}
-	timer := io.NewTimerOutput("Pump runtime hours today", pumpOutput, time.Now)
+	meteredPumpOutput := io.NewMeteredOutput(pumpOutput)
+	timer := io.NewTimerOutput("Pump runtime hours today", meteredPumpOutput, time.Now)
 	meteredTimer := io.NewMeteredInput(&timer)
 
 	pumpOrOutputMembers := io.NewOrOutput("Pump", &timer, 2)
