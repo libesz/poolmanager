@@ -40,7 +40,7 @@ func (o *OneWireTemperatureInput) Value() float64 {
 		return InputError
 	}
 	converted, err := strconv.Atoi(string(rawMatched[1]))
-	if err != nil {
+	if err != nil || converted >= 85 || converted < -100 {
 		log.Printf("OneWireTemperatureInput: Failed to convert string %s to int from onewire file: %s, error: %s", rawMatched[1], o.fullPath, err.Error())
 		return InputError
 	}
