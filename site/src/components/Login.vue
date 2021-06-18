@@ -34,7 +34,7 @@
     }),
     methods: {
       tryLogin() {
-        fetch('/login', {method: "POST", body: JSON.stringify({password: this.password})})
+        fetch('login', {method: "POST", body: JSON.stringify({password: this.password})})
         .then((result) => {
           console.log(result)
           result.json().then( (decoded) => {

@@ -10,7 +10,7 @@
           alt="Pool Manager Logo"
           class="shrink mr-2"
           contain
-          src="/favicon.png"
+          src="favicon.png"
           transition="scale-transition"
           width="40"
         />

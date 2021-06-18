@@ -24,13 +24,15 @@ func cleanup(cleanTheseUp []io.Haltable) {
 }
 
 type StaticConfig struct {
-	ListenOn          string `default:":8000"`
-	Password          string `required:"true"`
-	PumpGPIO1         string `required:"true" default:"GPIO23"`
-	PumpGPIO2         string `required:"true" default:"GPIO24"`
-	HeaterGPIO        string `required:"true" default:"GPIO2"`
-	TempSensorID      string `required:"true"`
-	DynamicConfigPath string `required:"true" default:"config.yaml"`
+	ListenOn          string        `default:":8000"`
+	Password          string        `required:"true"`
+	PumpGPIO1         string        `required:"true" default:"GPIO23"`
+	PumpGPIO2         string        `required:"true" default:"GPIO24"`
+	HeaterGPIO        string        `required:"true" default:"GPIO2"`
+	TempSensorID      string        `required:"true"`
+	DynamicConfigPath string        `required:"true" default:"config.yaml"`
+	MetricsPollTime   time.Duration `required:"true" default:"1m"`
+	FakeIO            bool          `required:"false" default:"false"`
 }
 
 func main() {
@@ -59,24 +61,46 @@ func main() {
 		cleanup(cleanTheseUp)
 	}()
 
-	//pumpOutput1 := &io.DummyOutput{Name_: "Pump1"}
-	//pumpOutput2 := &io.DummyOutput{Name_: "Pump2"}
-	pumpOutput1 := io.NewGPIOOutput("Pump1", staticConfig.PumpGPIO1, true)
-	cleanTheseUp = append(cleanTheseUp, pumpOutput1)
-	pumpOutput2 := io.NewGPIOOutput("Pump2", staticConfig.PumpGPIO2, true)
-	cleanTheseUp = append(cleanTheseUp, pumpOutput2)
-	pumpOutput := io.NewOutputDistributor("Pump", []io.Output{pumpOutput1, pumpOutput2})
-	timer := io.NewTimerOutput("Pump runtime hours today", pumpOutput, time.Now)
+	var pumpOutput io.Output
+	if !staticConfig.FakeIO {
+		pumpOutput1 := io.NewGPIOOutput("Pump1", staticConfig.PumpGPIO1, true)
+		cleanTheseUp = append(cleanTheseUp, pumpOutput1)
+		pumpOutput2 := io.NewGPIOOutput("Pump2", staticConfig.PumpGPIO2, true)
+		cleanTheseUp = append(cleanTheseUp, pumpOutput2)
+		pumpOutput = io.NewOutputDistributor("Pump", []io.Output{pumpOutput1, pumpOutput2})
+	} else {
+		pumpOutput1 := &io.DummyOutput{Name_: "Pump1"}
+		pumpOutput2 := &io.DummyOutput{Name_: "Pump2"}
+		pumpOutput = io.NewOutputDistributor("Pump", []io.Output{pumpOutput1, pumpOutput2})
+	}
+	meteredPumpOutput := io.NewMeteredOutput(pumpOutput)
+	timer := io.NewTimerOutput("Pump runtime hours today", meteredPumpOutput, time.Now)
+	meteredTimer := io.NewMeteredInput(&timer)
+
 	pumpOrOutputMembers := io.NewOrOutput("Pump", &timer, 2)
 	pumpController := controller.NewPoolPumpController(&timer, &pumpOrOutputMembers[0], time.Now)
 
-	//cachedTempSensor := &io.DummyTempSensor{Temperature: 26}
-	realTempSensor := io.NewOneWireTemperatureInput("Pool temperature", staticConfig.TempSensorID)
-	cachedTempSensor := io.NewCacheInput("Pool temperature", 240*time.Second, realTempSensor, time.Now)
-	//heaterOutput := &io.DummyOutput{Name_: "Heater"}
-	heaterOutput := io.NewGPIOOutput("Heater", staticConfig.HeaterGPIO, false)
-	cleanTheseUp = append(cleanTheseUp, heaterOutput)
-	tempController := controller.NewPoolTempController(0.5, cachedTempSensor, heaterOutput, &pumpOrOutputMembers[1], 5*time.Minute, time.Now)
+	var cachedTempSensor io.Input
+	if !staticConfig.FakeIO {
+		realTempSensor := io.NewOneWireTemperatureInput("Pool temperature", staticConfig.TempSensorID)
+		cachedTempSensor = io.NewCacheInput("Pool temperature", 240*time.Second, realTempSensor, time.Now)
+	} else {
+		cachedTempSensor = &io.DummyTempSensor{Temperature: 26}
+	}
+	meteredTempSensor := io.NewMeteredInput(cachedTempSensor)
+
+	var heaterOutput io.Output
+	if !staticConfig.FakeIO {
+		heaterOutputTemp := io.NewGPIOOutput("Heater", staticConfig.HeaterGPIO, false)
+		cleanTheseUp = append(cleanTheseUp, heaterOutputTemp)
+		heaterOutput = heaterOutputTemp
+	} else {
+		heaterOutput = &io.DummyOutput{Name_: "Heater"}
+	}
+	meteredHeaterOutput := io.NewMeteredOutput(heaterOutput)
+	tempController := controller.NewPoolTempController(0.5, cachedTempSensor, meteredHeaterOutput, &pumpOrOutputMembers[1], 5*time.Minute, time.Now)
+
+	pollController := controller.NewPollController([]io.Input{meteredTimer, meteredTempSensor}, []io.Output{}, staticConfig.MetricsPollTime)
 
 	stopChan := make(chan struct{})
 	wg := sync.WaitGroup{}
@@ -98,6 +122,7 @@ func main() {
 
 	s.AddController(&tempController)
 	s.AddController(&pumpController)
+	s.AddController(&pollController)
 
 	wg.Add(1)
 	w := webui.New(staticConfig.ListenOn, staticConfig.Password, c, []io.Input{cachedTempSensor, &timer}, []io.Output{pumpOutput, heaterOutput})

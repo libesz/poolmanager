@@ -37,7 +37,7 @@
       'token',
     ],
     created() {
-      fetch('/api/config', {headers: {'Authorization': 'Bearer ' + this.$props.token}})
+      fetch('api/config', {headers: {'Authorization': 'Bearer ' + this.$props.token}})
       .then((result) => {
         if(result.status >= 200 && result.status <= 299){
           result.json()
