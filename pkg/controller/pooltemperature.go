@@ -166,7 +166,6 @@ func (c delayedOperation) GetDefaultConfig() Config {
 }
 
 func (c *PoolTempController) shutdown() []EnqueueRequest {
-	c.calculatedDesiredTempGauge.Set(0)
 	if c.heaterOutput.Set(false) || c.pumpOutput.Get() {
 		c.pendingOperation = true
 		pending := delayedOperation{setTo: false, output: c.pumpOutput, pendingOperationReady: c.pendingOperationReady}
@@ -197,6 +196,7 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 	}
 	if !config.Toggles[configKeyEnabled] {
 		log.Printf("PoolTempController: controller is disabled, shutting down outputs\n")
+		c.calculatedDesiredTempGauge.Set(0)
 		return c.shutdown()
 	}
 	currentTemp := c.tempSensor.Value()
@@ -218,8 +218,8 @@ func (c *PoolTempController) Act(config Config) []EnqueueRequest {
 	}
 	thisManyHoursUntilNextStart = nextStart.Sub(now).Hours()
 	calculatedDesiredTemp := config.Ranges[configKeyTemp] - thisManyHoursUntilNextStart*c.heaterFactor
+	c.calculatedDesiredTempGauge.Set(calculatedDesiredTemp)
 	if calculatedDesiredTemp >= currentTemp {
-		c.calculatedDesiredTempGauge.Set(calculatedDesiredTemp)
 		log.Printf("PoolTempController: hours back: %.2f. Actual temperature: %.2f %s. Calculated desired temperature: %.2f %s. Need more heat.\n", thisManyHoursUntilNextStart, currentTemp, c.tempSensor.Degree(), calculatedDesiredTemp, c.tempSensor.Degree())
 		return append(c.startup(), EnqueueRequest{Controller: c, Config: config, After: c.pollDuration})
 	}
