@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -18,9 +17,7 @@ import (
 	"github.com/libesz/poolmanager/pkg/configstore"
 	"github.com/libesz/poolmanager/pkg/controller"
 	"github.com/libesz/poolmanager/pkg/io"
-	"github.com/libesz/poolmanager/pkg/webui/content/static"
-	"github.com/libesz/poolmanager/pkg/webui/content/templates"
-	"github.com/shurcooL/httpfs/html/vfstemplate"
+	"github.com/libesz/poolmanager/pkg/webui/content"
 	"github.com/urfave/negroni"
 )
 
@@ -29,7 +26,6 @@ var parsedTemplates *template.Template
 func New(listenOn, password string, configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output) WebUI {
 	r := mux.NewRouter()
 
-	parsedTemplates = template.Must(vfstemplate.ParseGlob(templates.Content, nil, "*.html"))
 	signingKey := []byte(uuid.New().String())
 	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
@@ -39,46 +35,12 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 		// If the signing method is not constant the ValidationKeyGetter callback can be used to implement additional checks
 		// Important to avoid security issues described here: https://auth0.com/blog/2015/03/31/critical-vulnerabilities-in-json-web-token-libraries/
 		SigningMethod: jwt.SigningMethodHS256,
-		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err string) {
-			log.Println("WebUI: unauthorized request:", err)
-			if !strings.Contains(r.URL.Path, "api/") {
-				w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0")
-				urlToRedirect := r.Header.Get("X-Script-Name") + "/login"
-				http.Redirect(w, r, urlToRedirect, 301)
-				return
-			}
-			w.WriteHeader(http.StatusUnauthorized)
-		},
-		Extractor: func(r *http.Request) (string, error) {
-			if !strings.Contains(r.URL.Path, "api/") {
-				tokenFromCookie, err := r.Cookie("token")
-				if err != nil {
-					return "", fmt.Errorf("Web client shall use cookie tokens")
-				}
-				//log.Println("Extractor: returning token with cookie value:", tokenFromCookie.Value)
-				return tokenFromCookie.Value, nil
-			}
-			//log.Println("Extractor: passing to FromAuthHeader")
-			return jwtmiddleware.FromAuthHeader(r)
-		},
 	})
 
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(static.Content)))
-
-	r.Handle("/", negroni.New(
-		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
-		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			homeHandler(configStore, inputs, outputs, w, r)
-		})),
-	)).Methods("GET")
-
 	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("login attempted")
 		loginPostHandler(signingKey, password, w, r)
 	}).Methods("POST")
-
-	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		loginGetHandler(w, r)
-	}).Methods("GET")
 
 	r.Handle("/api/config", negroni.New(
 		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
@@ -86,6 +48,13 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 			configPostHandler(configStore, w, r)
 		})),
 	)).Methods("POST")
+
+	r.Handle("/api/config", negroni.New(
+		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
+		negroni.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			configGetHandler(configStore, w, r)
+		})),
+	)).Methods("GET")
 
 	r.Handle("/api/ping", negroni.New(
 		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext),
@@ -98,6 +67,8 @@ func New(listenOn, password string, configStore *configstore.ConfigStore, inputs
 			apiStatusHandler(configStore, inputs, outputs, w, r)
 		})),
 	)).Methods("GET")
+
+	r.PathPrefix("/").Handler(http.FileServer(content.Content))
 
 	server := &http.Server{
 		Handler:      r,
@@ -130,55 +101,6 @@ func (w *WebUI) Run(stopChan chan struct{}) {
 	wg.Wait()
 }
 
-type PageData struct {
-	ConfigProperties map[string]controller.ConfigProperties
-	ConfigValues     map[string]controller.Config
-	Inputs           []io.Input
-	InputErrorConst  float64
-	Outputs          []io.Output
-	Function         string
-	Debug            string
-}
-
-func homeHandler(configStore *configstore.ConfigStore, inputs []io.Input, outputs []io.Output, w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-
-	data := PageData{
-		ConfigProperties: make(map[string]controller.ConfigProperties),
-		ConfigValues:     make(map[string]controller.Config),
-		Function:         "default",
-		Inputs:           inputs,
-		InputErrorConst:  io.InputError,
-		Outputs:          outputs,
-	}
-
-	controllers := configStore.GetControllerNames()
-	for _, controllerName := range controllers {
-		data.ConfigProperties[controllerName] = configStore.GetProperties(controllerName)
-		data.ConfigValues[controllerName] = configStore.Get(controllerName)
-	}
-
-	log.Printf("Webui: rendering page with data: %+v\n", data)
-	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
-		log.Println(err.Error())
-	}
-}
-
-func loginGetHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-
-	function := "login"
-
-	data := PageData{
-		Function: function,
-	}
-
-	log.Printf("Webui: rendering login page with data: %+v\n", data)
-	if err := parsedTemplates.ExecuteTemplate(w, "index.html", data); err != nil {
-		log.Println(err.Error())
-	}
-}
-
 type ApiStatusResponse struct {
 	Inputs  map[string]string `json:"inputs"`
 	Outputs map[string]bool   `json:"outputs"`
@@ -207,23 +129,47 @@ func apiStatusHandler(configStore *configstore.ConfigStore, inputs []io.Input, o
 	_ = json.NewEncoder(w).Encode(data)
 }
 
-type ConfigRequest struct {
+type ConfigChangeRequest struct {
 	Controller string `json:"controller"`
 	Type       string `json:"type"`
 	Key        string `json:"key"`
 	Value      string `json:"value"`
 }
 
-type ConfigResponse struct {
+type ConfigChangeResponse struct {
 	Error     string      `json:"error"`
 	OrigValue interface{} `json:"origValue"`
+}
+
+type ConfigData struct {
+	ConfigProperties map[string]controller.ConfigProperties `json:"schema"`
+	ConfigValues     map[string]controller.Config           `json:"values"`
+}
+
+func configGetHandler(configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	data := ConfigData{
+		ConfigProperties: make(map[string]controller.ConfigProperties),
+		ConfigValues:     make(map[string]controller.Config),
+	}
+
+	controllers := configStore.GetControllerNames()
+	for _, controllerName := range controllers {
+		data.ConfigProperties[controllerName] = configStore.GetProperties(controllerName)
+		data.ConfigValues[controllerName] = configStore.Get(controllerName)
+	}
+
+	log.Printf("Webui: config properties response rendered with data: %+v\n", data)
+	json.NewEncoder(w).Encode(&data)
 }
 
 func configPostHandler(configStore *configstore.ConfigStore, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	decoder := json.NewDecoder(r.Body)
-	var data ConfigRequest
+	var data ConfigChangeRequest
 	err := decoder.Decode(&data)
 	if err != nil {
 		log.Printf("Webui: decode error on request: %s\n", err.Error())
@@ -277,13 +223,13 @@ func configPostHandler(configStore *configstore.ConfigStore, w http.ResponseWrit
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	u := ConfigResponse{Error: ""}
+	u := ConfigChangeResponse{Error: ""}
 	_ = json.NewEncoder(w).Encode(u)
 }
 
 func respondError(w http.ResponseWriter, origValue interface{}, err error) {
 	w.WriteHeader(http.StatusConflict)
-	u := ConfigResponse{Error: err.Error(), OrigValue: origValue}
+	u := ConfigChangeResponse{Error: err.Error(), OrigValue: origValue}
 	_ = json.NewEncoder(w).Encode(u)
 }
 
@@ -320,7 +266,7 @@ func loginPostHandler(signingKey []byte, password string, w http.ResponseWriter,
 	if err != nil {
 		log.Printf("Webui: decode error on login request: %s\n", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		u := ConfigResponse{Error: err.Error(), OrigValue: nil}
+		u := ConfigChangeResponse{Error: err.Error(), OrigValue: nil}
 		_ = json.NewEncoder(w).Encode(u)
 		return
 	}

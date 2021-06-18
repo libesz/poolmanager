@@ -3,20 +3,20 @@ package controller
 import "time"
 
 type ConfigRangeProperties struct {
-	Name   string
-	Degree string
-	Min    float64
-	Max    float64
-	Step   float64
+	Name   string  `json:"name"`
+	Degree string  `json:"degree"`
+	Min    float64 `json:"min"`
+	Max    float64 `json:"max"`
+	Step   float64 `json:"step"`
 }
 
 type ConfigToggleProperties struct {
-	Name string
+	Name string `json:"name"`
 }
 
 type ConfigProperties struct {
-	Ranges  []ConfigRangeProperties
-	Toggles []ConfigToggleProperties
+	Ranges  []ConfigRangeProperties  `json:"ranges"`
+	Toggles []ConfigToggleProperties `json:"toggles"`
 }
 
 func EmptyProperties() ConfigProperties {
@@ -27,8 +27,8 @@ func EmptyProperties() ConfigProperties {
 }
 
 type Config struct {
-	Ranges  map[string]float64
-	Toggles map[string]bool
+	Ranges  map[string]float64 `json:"ranges"`
+	Toggles map[string]bool    `json:"toggles"`
 }
 
 func EmptyConfig() Config {
