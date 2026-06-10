@@ -9,6 +9,8 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.11.1
+	github.com/shurcooL/httpfs v0.0.0-20230704072500-f1e31cf0ba5c // indirect
+	github.com/shurcooL/vfsgen v0.0.0-20230704071429-0000e147ea92 // indirect
 	github.com/urfave/negroni v1.0.0
 	gopkg.in/yaml.v2 v2.3.0
 	periph.io/x/periph v3.6.2+incompatible
